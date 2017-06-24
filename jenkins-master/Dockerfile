@@ -45,7 +45,7 @@ COPY /config.xml /usr/share/jenkins/ref/config.xml
 COPY /buildtriggerbadge.xml /usr/share/jenkins/ref/buildtriggerbadge.xml
 COPY /docker-slaves.xml /usr/share/jenkins/ref/docker-slaves.xml
 COPY /jenkins.CLI.xml /usr/share/jenkins/ref/jenkins.CLI.xml
-COPY /jenkins.model.JenkinsLocationConfiguration /usr/share/jenkins/ref/jenkins.model.JenkinsLocationConfiguration
+COPY /jenkins.model.JenkinsLocationConfiguration.xml /usr/share/jenkins/ref/jenkins.model.JenkinsLocationConfiguration.xml
 
 # jenkins version being bundled in this docker image
 ARG JENKINS_VERSION
