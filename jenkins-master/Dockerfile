@@ -69,15 +69,18 @@ EXPOSE ${http_port}
 
 ENV COPY_REFERENCE_FILE_LOG $JENKINS_HOME/copy_reference_file.log
 
-USER ${user}
-
 COPY jenkins-support /usr/local/bin/jenkins-support
 COPY jenkins.sh /usr/local/bin/jenkins.sh
+
 ENTRYPOINT ["/bin/tini", "--", "/usr/local/bin/jenkins.sh"]
 
 # from a derived Dockerfile, can use `RUN plugins.sh active.txt` to setup /usr/share/jenkins/ref/plugins from a support bundle
 COPY plugins.sh /usr/local/bin/plugins.sh
 COPY install-plugins.sh /usr/local/bin/install-plugins.sh
+
+RUN chmod 755 /usr/local/bin/install-plugins.sh /usr/local/bin/plugins.sh
+
+USER ${user}
 
 RUN /usr/local/bin/install-plugins.sh ace-editor active-directory ant antisamy-markup-formatter async-http-client authentication-tokens bouncycastle-api branch-api build-timeout buildtriggerbadge cloudbees-folder config-file-provider credentials-binding credentials display-url-api docker-commons docker-slaves dockerhub-notification durable-task email-ext embeddable-build-status envinject external-monitor-job favorite ghprb git-client git-server git github-api github-branch-source github-organization-folder github gradle greenballs handlebars hashicorp-vault icon-shim jackson2-api javadoc jquery-detached junit ldap mailer mapdb-api matrix-auth matrix-project metadata metrics modernstatus momentjs pam-auth pegdown-formatter pipeline-build-step pipeline-graph-analysis pipeline-input-step pipeline-maven pipeline-milestone-step pipeline-rest-api pipeline-stage-step pipeline-stage-view pipeline-utility-steps plain-credentials remote-terminal-access resource-disposer scm-sync-configuration script-security sonar sse-gateway ssh-credentials ssh-slaves structs subversion timestamper token-macro update-sites-manager variant windows-slaves workflow-aggregator workflow-api workflow-basic-steps workflow-cps workflow-durable-task-step workflow-job workflow-multibranch workflow-remote-loader workflow-scm-step workflow-step-api workflow-support ws-cleanup
 
