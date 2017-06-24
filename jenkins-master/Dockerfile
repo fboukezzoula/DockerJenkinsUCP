@@ -8,7 +8,7 @@ ARG user=jenkins
 ARG group=jenkins
 ARG uid=1000
 ARG gid=1000
-ARG http_port=8080
+ARG http_port=2017
 
 #ARG agent_port=50000
 
@@ -23,12 +23,15 @@ RUN groupadd -g ${gid} ${group} \
 
 # Jenkins home directory is a volume, so configuration and build history 
 # can be persisted and survive image upgrades
-VOLUME /var/jenkins_home
+VOLUME $JENKINS_HOME
 
 # `/usr/share/jenkins/ref/` contains all reference configuration we want 
 # to set on a fresh new installation. Use it to bundle additional plugins 
 # or config file with your custom jenkins Docker image.
-RUN mkdir -p /usr/share/jenkins/ref/init.groovy.d
+RUN mkdir -p /usr/share/jenkins/ref/init.groovy.d && mkdir -p /usr/share/jenkins/ref/.ssh && mkdir -p /usr/share/jenkins/ref/.ssl && mkdir -p /.docker 
+
+COPY /docker /usr/bin/docker
+RUN chmod a+x /usr/bin/docker
 
 ENV TINI_VERSION 0.14.0
 ENV TINI_SHA 6c41ec7d33e857d4779f14d9c74924cab0c7973485d2972419a3b7c7620ff5fd
@@ -39,9 +42,12 @@ RUN curl -fsSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION
 
 #COPY init.groovy /usr/share/jenkins/ref/init.groovy.d/tcp-slave-agent-port.groovy
 
+ADD /jenkins_home.zip /usr/share/jenkins/ref/
+RUN cd  /usr/share/jenkins/ref/ && unzip /usr/share/jenkins/ref/jenkins_home.zip && rm /usr/share/jenkins/ref/jenkins_home.zip 
+
 # COPY several files for customize the Jenkins Master
 
-COPY /config.xml /usr/share/jenkins/ref/config.xml
+COPY /wildcard.finaxys-lab.intra.jks /usr/share/jenkins/ref/.ssl/wildcard.finaxys-lab.intra.jks
 COPY /buildtriggerbadge.xml /usr/share/jenkins/ref/buildtriggerbadge.xml
 COPY /docker-slaves.xml /usr/share/jenkins/ref/docker-slaves.xml
 COPY /jenkins.CLI.xml /usr/share/jenkins/ref/jenkins.CLI.xml
@@ -59,7 +65,7 @@ ARG JENKINS_URL=https://repo.jenkins-ci.org/public/org/jenkins-ci/main/jenkins-w
 RUN curl -fsSL ${JENKINS_URL} -o /usr/share/jenkins/jenkins.war 
 
 ENV JENKINS_UC https://updates.jenkins.io
-RUN chown -R ${user} "$JENKINS_HOME" /usr/share/jenkins/ref
+RUN chown -R ${user} "$JENKINS_HOME" /usr/share/jenkins/ref /.docker 
 
 # for main web interface:
 EXPOSE ${http_port}
