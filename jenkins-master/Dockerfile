@@ -40,15 +40,12 @@ RUN curl -fsSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION
 #COPY init.groovy /usr/share/jenkins/ref/init.groovy.d/tcp-slave-agent-port.groovy
 
 # COPY several files for customize the Jenkins Master
+
 COPY /config.xml /usr/share/jenkins/ref/config.xml
+COPY /buildtriggerbadge.xml /usr/share/jenkins/ref/buildtriggerbadge.xml
 COPY /docker-slaves.xml /usr/share/jenkins/ref/docker-slaves.xml
-COPY /jenkins.security.UpdateSiteWarningsConfiguration.xml /usr/share/jenkins/ref/jenkins.security.UpdateSiteWarningsConfiguration.xml
-COPY /envInject.xml /usr/share/jenkins/ref/envInject.xml
-COPY /envinject-plugin-configuration.xml /usr/share/jenkins/ref/envinject-plugin-configuration.xml
 COPY /jenkins.CLI.xml /usr/share/jenkins/ref/jenkins.CLI.xml
-COPY /jenkins.model.DownloadSettings.xml /usr/share/jenkins/ref/jenkins.model.DownloadSettings.xml
-COPY /jenkins.security.QueueItemAuthenticatorConfiguration.xml /usr/share/jenkins/ref/jenkins.security.QueueItemAuthenticatorConfiguration.xml
-COPY /jenkins.security.UpdateSiteWarningsConfiguration.xml /usr/share/jenkins/ref/jenkins.security.UpdateSiteWarningsConfiguration.xml
+COPY /jenkins.model.JenkinsLocationConfiguration /usr/share/jenkins/ref/jenkins.model.JenkinsLocationConfiguration
 
 # jenkins version being bundled in this docker image
 ARG JENKINS_VERSION

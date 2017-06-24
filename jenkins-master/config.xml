@@ -1,25 +1,26 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <hudson>
-  <disabledAdministrativeMonitors/>
+  <disabledAdministrativeMonitors>
+    <string>jenkins.security.s2m.MasterKillSwitchWarning</string>
+  </disabledAdministrativeMonitors>
   <version>2.60.1</version>
-  <numExecutors>2</numExecutors>
+  <numExecutors>0</numExecutors>
   <mode>NORMAL</mode>
   <useSecurity>true</useSecurity>
   <authorizationStrategy class="hudson.security.GlobalMatrixAuthorizationStrategy">
-    <permission>hudson.model.Hudson.Administer:##ADMIN_JENKINS##</permission>
+    <permission>hudson.model.Hudson.Administer:FINAXYS_ADMIN_JENKINS</permission>
     <permission>hudson.model.Hudson.Administer:jenkins-admin</permission>
   </authorizationStrategy>
   <securityRealm class="hudson.plugins.active_directory.ActiveDirectorySecurityRealm" plugin="active-directory@2.6">
     <domains>
       <hudson.plugins.active__directory.ActiveDirectoryDomain>
         <name>finaxys-lab.intra</name>
-        <servers>controller.finaxys-lab.intra:3268</servers>
-        <bindName>jenkins-admin</bindName>
-        <bindPassword>{AQAAABAAAAAQyPS0edYPpUn9bS+aByYidWgj7SFRpo4GztDGCEGwd+I=}</bindPassword>
+        <bindName>CN=jenkins-admin,OU=JENKINS_UCP,DC=finaxys-lab,DC=intra</bindName>
+        <bindPassword>{AQAAABAAAAAQnORIjSiKes3PV7MOtwF+TG2atF+rupEzVo+OLesdQok=}</bindPassword>
       </hudson.plugins.active__directory.ActiveDirectoryDomain>
     </domains>
     <startTls>true</startTls>
-    <groupLookupStrategy>AUTO</groupLookupStrategy>
+    <groupLookupStrategy>RECURSIVE</groupLookupStrategy>
     <removeIrrelevantGroups>false</removeIrrelevantGroups>
     <tlsConfiguration>TRUST_ALL_CERTIFICATES</tlsConfiguration>
   </securityRealm>
@@ -29,7 +30,7 @@
   <buildsDir>${ITEM_ROOTDIR}/builds</buildsDir>
   <systemMessage>&lt;IMG SRC=&quot;http://controller.finaxys-lab.intra/finaxys.png&quot;&gt;</systemMessage>
   <markupFormatter class="org.jenkins_ci.plugins.pegdown_formatter.PegDownFormatter" plugin="pegdown-formatter@1.3">
-    <flags>262399</flags>
+    <flags>0</flags>
     <extensions>
       <org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
         <name>SUPPRESS_ALL_HTML</name>
@@ -41,42 +42,42 @@
       <org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
         <name>ABBREVIATIONS</name>
         <flag>4</flag>
-        <selected>true</selected>
+        <selected>false</selected>
       </org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
       <org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
         <name>AUTOLINKS</name>
         <flag>16</flag>
-        <selected>true</selected>
+        <selected>false</selected>
       </org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
       <org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
         <name>DEFINITIONS</name>
         <flag>64</flag>
-        <selected>true</selected>
+        <selected>false</selected>
       </org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
       <org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
         <name>FENCED_CODE_BLOCKS</name>
         <flag>128</flag>
-        <selected>true</selected>
+        <selected>false</selected>
       </org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
       <org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
         <name>HARDWRAPS</name>
         <flag>8</flag>
-        <selected>true</selected>
+        <selected>false</selected>
       </org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
       <org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
         <name>NO_FOLLOW_LINKS</name>
         <flag>262144</flag>
-        <selected>true</selected>
+        <selected>false</selected>
       </org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
       <org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
         <name>SMARTYPANTS</name>
         <flag>3</flag>
-        <selected>true</selected>
+        <selected>false</selected>
       </org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
       <org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
         <name>TABLES</name>
         <flag>32</flag>
-        <selected>true</selected>
+        <selected>false</selected>
       </org.jenkins__ci.plugins.pegdown__formatter.PegDownExtension>
     </advancedExtensions>
   </markupFormatter>
