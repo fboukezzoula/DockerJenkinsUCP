@@ -1,0 +1,123 @@
+@echo off
+
+REM Définition des variables
+set "repoUrl=https://github.com/votre-utilisateur/votre-repo.git"
+set "targetDirectory=C:\chemin\vers\repertoire-cible"
+set "psScript=nom-du-script.ps1"
+
+REM Clonage du dépôt Git
+git clone "%repoUrl%" "%targetDirectory%"
+
+REM Vérification si le clonage a réussi
+if %errorlevel% neq 0 (
+    echo Une erreur est survenue lors du clonage du dépôt Git.
+    exit /b %errorlevel%
+)
+
+REM Déplacement vers le répertoire cloné
+cd "%targetDirectory%"
+
+REM Exécution du script PowerShell
+powershell -ExecutionPolicy Bypass -File "%psScript%"
+
+
+
+
+
+
+@echo off
+
+REM Définition des variables
+set "repoUrl=https://github.com/votre-utilisateur/votre-repo.git"
+set "targetDirectory=C:\chemin\vers\repertoire-cible"
+set "psScript=nom-du-script.ps1"
+
+REM Clonage du dépôt Git
+git clone "%repoUrl%" "%targetDirectory%"
+
+REM Vérification si le clonage a réussi
+if %errorlevel% neq 0 (
+    echo Une erreur est survenue lors du clonage du dépôt Git.
+    exit /b %errorlevel%
+)
+
+REM Déplacement vers le répertoire cloné
+cd "%targetDirectory%"
+
+REM Exécution du script PowerShell
+powershell -ExecutionPolicy Bypass -File "%psScript%"
+
+REM Ouvrir une nouvelle instance de PowerShell dans le répertoire cloné
+start powershell /K "cd \"%targetDirectory%\""
+
+
+
+
+
+
+
+
+
+@echo off
+
+REM Définition des variables
+set "repoUrl=https://github.com/votre-utilisateur/votre-repo.git"
+set "targetDirectory=C:\chemin\vers\repertoire-cible"
+set "psScript=nom-du-script.ps1"
+
+REM Clonage du dépôt Git
+git clone "%repoUrl%" "%targetDirectory%"
+
+REM Vérification si le clonage a réussi
+if %errorlevel% neq 0 (
+    echo Une erreur est survenue lors du clonage du dépôt Git.
+    exit /b %errorlevel%
+)
+
+REM Déplacement vers le répertoire cloné
+cd "%targetDirectory%"
+
+REM Exécution du script PowerShell
+powershell -ExecutionPolicy Bypass -File "%psScript%"
+
+REM Ouvrir une nouvelle instance de PowerShell dans le répertoire cloné
+start powershell -NoExit -Command "cd \"%targetDirectory%\""
+
+
+
+
+
+
+Oui, il est possible de changer le prompt pour revenir à l'invite de commande de PowerShell après l'exécution du script .ps1. Cependant, cela ne peut pas être fait directement depuis le script batch, car l'exécution d'un script PowerShell depuis un script batch se fait dans un processus distinct.
+
+Une solution consiste à créer un profil PowerShell personnalisé qui sera chargé chaque fois que vous ouvrez une nouvelle session PowerShell. Dans ce profil, vous pouvez définir le prompt selon vos préférences.
+
+Voici comment procéder :
+
+Ouvrez une session PowerShell.
+Exécutez la commande suivante pour vérifier si vous avez déjà un profil PowerShell existant :
+powershell
+Copy code
+Test-Path $Profile
+Si cela renvoie False, cela signifie que vous n'avez pas de profil existant. Dans ce cas, passez à l'étape 3. Sinon, passez à l'étape 4.
+Exécutez la commande suivante pour créer un profil PowerShell :
+powershell
+Copy code
+New-Item -Path $Profile -ItemType File -Force
+Ouvrez le profil PowerShell dans votre éditeur de texte préféré en exécutant la commande suivante :
+powershell
+Copy code
+notepad.exe $Profile
+Si vous utilisez un autre éditeur de texte, remplacez notepad.exe par le chemin vers votre éditeur.
+Dans le fichier du profil PowerShell, ajoutez la ligne suivante pour définir le prompt selon vos préférences :
+powershell
+Copy code
+function prompt {
+    "PS $($executionContext.SessionState.Path.CurrentLocation)$('>' * ($nestedPromptLevel + 1)) "
+}
+Cette ligne définit le prompt pour afficher "PS" suivi du chemin actuel et d'un nombre croissant de caractères ">", en fonction du niveau de prompt imbriqué.
+Enregistrez et fermez le fichier.
+Fermez toutes les instances de PowerShell existantes et ouvrez une nouvelle session PowerShell.
+Maintenant, lorsque vous exécutez votre script .ps1 à partir du script batch, une fois le script terminé, vous devriez revenir à l'invite de commande de PowerShell avec le prompt personnalisé que vous avez défini dans votre profil PowerShell.
+
+Notez que cela affectera tous les prompts dans PowerShell, pas seulement après l'exécution du script .ps1.
