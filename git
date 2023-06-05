@@ -1,4 +1,28 @@
 
+# Installer le module Posh-SSH s'il n'est pas déjà installé
+if (-not (Get-Module -ListAvailable -Name Posh-SSH)) {
+    Install-Module -Name Posh-SSH -Force
+}
+
+$sshKeyPath = "C:\chemin\vers\la\clé\ssh"
+$sshKeyFile = "$sshKeyPath\id_rsa"
+
+# Vérification si le dossier de la clé SSH existe et le créer s'il n'existe pas
+if (!(Test-Path $sshKeyPath)) {
+    New-Item -ItemType Directory -Path $sshKeyPath | Out-Null
+}
+
+# Vérification si la clé SSH existe déjà et supprimer la clé existante
+if (Test-Path $sshKeyFile) {
+    Remove-Item $sshKeyFile
+}
+
+# Générer une nouvelle clé SSH RSA sans passphrase en utilisant Posh-SSH
+$rsaKey = New-SSHKey -Path $sshKeyFile -KeyLength 4096
+
+Write-Host "La clé SSH a été générée avec succès."
+
+
 if (Get-Module -ListAvailable -Name OpenSSH) {
     Write-Host "OpenSSH est installé sur ce système."
 }
