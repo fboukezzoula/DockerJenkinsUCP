@@ -1,3 +1,33 @@
+
+if (Get-Module -ListAvailable -Name OpenSSH) {
+    Write-Host "OpenSSH est installé sur ce système."
+}
+else {
+    Write-Host "OpenSSH n'est pas installé sur ce système."
+}
+
+
+$sshKeyPath = "C:\chemin\vers\la\clé\ssh"
+$sshKeyFile = "$sshKeyPath\id_rsa"
+
+# Vérification si le dossier de la clé SSH existe et le créer s'il n'existe pas
+if (!(Test-Path $sshKeyPath)) {
+    New-Item -ItemType Directory -Path $sshKeyPath | Out-Null
+}
+
+# Vérification si la clé SSH existe déjà et supprimer la clé existante
+if (Test-Path $sshKeyFile) {
+    Remove-Item $sshKeyFile
+}
+
+# Générer une nouvelle clé SSH RSA sans passphrase en utilisant OpenSSH
+$sshKeyGenArgs = "-t rsa -b 4096 -N '' -f $sshKeyFile"
+& ssh-keygen $sshKeyGenArgs
+
+Write-Host "La clé SSH a été générée avec succès."
+
+
+
 @echo off
 
 REM Définition des variables
