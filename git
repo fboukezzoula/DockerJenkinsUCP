@@ -1,3 +1,12 @@
+$sshKeygenCommand = "ssh-keygen -t rsa -b 4096 -N '' -f $sshKeyFile"
+$null = Invoke-Expression -Command $sshKeygenCommand
+
+
+
+
+
+
+
 Add-Type -Path "C:\chemin\vers\BouncyCastle.Crypto.dll"
 
 $sshKeyPath = "C:\chemin\vers\la\clé\ssh"
