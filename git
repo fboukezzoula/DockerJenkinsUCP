@@ -15,6 +15,37 @@ $keyGen = New-Object Org.BouncyCastle.Crypto.Generators.RsaKeyPairGenerator
 $keyGen.Init((New-Object Org.BouncyCastle.Crypto.KeyGenerationParameters -ArgumentList (New-Object Org.BouncyCastle.Security.SecureRandom), 4096))
 
 $keyPair = $keyGen.GenerateKeyPair()
+$privateKeyInfo = [Org.BouncyCastle.Security.PrivateKeyInfo]::Factory.CreatePrivateKeyInfo($keyPair.Private)
+$privateKeyContent = [System.Convert]::ToBase64String($privateKeyInfo.GetEncoded())
+
+Set-Content -Path $sshKeyFile -Value "-----BEGIN OPENSSH PRIVATE KEY-----`n$privateKeyContent`n-----END OPENSSH PRIVATE KEY-----"
+
+Write-Host "La clé SSH a été générée avec succès."
+
+
+
+
+
+
+
+
+Add-Type -Path "C:\chemin\vers\BouncyCastle.Crypto.dll"
+
+$sshKeyPath = "C:\chemin\vers\la\clé\ssh"
+$sshKeyFile = "$sshKeyPath\id_rsa"
+
+if (!(Test-Path $sshKeyPath)) {
+    New-Item -ItemType Directory -Path $sshKeyPath | Out-Null
+}
+
+if (Test-Path $sshKeyFile) {
+    Remove-Item $sshKeyFile
+}
+
+$keyGen = New-Object Org.BouncyCastle.Crypto.Generators.RsaKeyPairGenerator
+$keyGen.Init((New-Object Org.BouncyCastle.Crypto.KeyGenerationParameters -ArgumentList (New-Object Org.BouncyCastle.Security.SecureRandom), 4096))
+
+$keyPair = $keyGen.GenerateKeyPair()
 $privateKeyInfo = [Org.BouncyCastle.OpenSsl.PemWriter]::ToPemObject($keyPair.Private)
 $privateKeyContent = [System.Text.Encoding]::ASCII.GetBytes($privateKeyInfo.Content)
 
