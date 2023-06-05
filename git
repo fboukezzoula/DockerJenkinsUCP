@@ -21,7 +21,6 @@ $generator.Init($parameters)
 
 $keyPair = $generator.GenerateKeyPair()
 $privateKey = $keyPair.Private
-$publicKey = $keyPair.Public
 
 # Enregistrer la clé privée
 $writer = New-Object System.IO.StringWriter
@@ -32,12 +31,16 @@ $privateKeyContent = $writer.ToString()
 Set-Content -Path $sshKeyFile -Value $privateKeyContent
 
 # Enregistrer la clé publique
-$publicKeyContent = $publicKey.GetPublicKeyData().ToBase64String()
-Set-Content -Path $sshPublicKeyFile -Value "ssh-rsa $publicKeyContent"
+$publicKey = $keyPair.Public
+$publicKeyBytes = $publicKey.GetEncoded()
+$publicKeyBase64 = [Convert]::ToBase64String($publicKeyBytes)
+$publicKeyContent = "ssh-rsa $publicKeyBase64"
+Set-Content -Path $sshPublicKeyFile -Value $publicKeyContent
 
 Write-Host "La clé SSH a été générée avec succès."
 Write-Host "Clé privée : $sshKeyFile"
 Write-Host "Clé publique : $sshPublicKeyFile"
+
 
 
 
