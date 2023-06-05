@@ -4,6 +4,40 @@ REM Définition des variables
 set "repoUrl=https://github.com/votre-utilisateur/votre-repo.git"
 set "targetDirectory=C:\chemin\vers\repertoire-cible"
 set "psScript=nom-du-script.ps1"
+set "argument=argument-du-script"
+
+REM Vérification si le répertoire cible existe et le supprimer s'il existe
+if exist "%targetDirectory%" (
+    echo Suppression du répertoire cible existant...
+    rmdir /s /q "%targetDirectory%"
+)
+
+REM Clonage du dépôt Git
+git clone "%repoUrl%" "%targetDirectory%"
+
+REM Vérification si le clonage a réussi
+if %errorlevel% neq 0 (
+    echo Une erreur est survenue lors du clonage du dépôt Git.
+    exit /b %errorlevel%
+)
+
+REM Déplacement vers le répertoire cloné
+cd "%targetDirectory%"
+
+REM Exécution du script PowerShell avec l'argument spécifié
+powershell -ExecutionPolicy Bypass -File "%psScript%" -argument "%argument%"
+
+REM Ouvrir une nouvelle instance de PowerShell dans le répertoire cloné
+start powershell -NoExit -Command "cd \"%targetDirectory%\""
+
+
+
+@echo off
+
+REM Définition des variables
+set "repoUrl=https://github.com/votre-utilisateur/votre-repo.git"
+set "targetDirectory=C:\chemin\vers\repertoire-cible"
+set "psScript=nom-du-script.ps1"
 
 REM Clonage du dépôt Git
 git clone "%repoUrl%" "%targetDirectory%"
