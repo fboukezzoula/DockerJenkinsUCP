@@ -12,7 +12,7 @@ if (Test-Path $sshKeyFile) {
 }
 
 $keyGen = New-Object Org.BouncyCastle.Crypto.Generators.RsaKeyPairGenerator
-$keyGen.Init(New-Object Org.BouncyCastle.Crypto.KeyGenerationParameters -ArgumentList (New-Object Org.BouncyCastle.Security.SecureRandom), 4096)
+$keyGen.Init((New-Object Org.BouncyCastle.Crypto.KeyGenerationParameters -ArgumentList (New-Object Org.BouncyCastle.Security.SecureRandom), 4096))
 
 $keyPair = $keyGen.GenerateKeyPair()
 $privateKeyInfo = [Org.BouncyCastle.OpenSsl.PemWriter]::ToPemObject($keyPair.Private)
