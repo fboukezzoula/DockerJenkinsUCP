@@ -1,4 +1,29 @@
 
+# Importer les modules requis
+Add-Type -Path (Join-Path (Get-Package -Name BouncyCastle).Source 'lib\netstandard2.0\BouncyCastle.Crypto.dll')
+
+# Définir les paramètres pour la clé SSH
+$sshKeyPath = "C:\chemin\vers\la\clé\ssh"
+$sshKeyFile = "$sshKeyPath\id_rsa"
+
+# Vérification si le dossier de la clé SSH existe et le créer s'il n'existe pas
+if (!(Test-Path $sshKeyPath)) {
+    New-Item -ItemType Directory -Path $sshKeyPath | Out-Null
+}
+
+# Générer une nouvelle clé SSH RSA sans passphrase
+$keyPairGenerator = [BouncyCastle.Crypto.Generators.RsaKeyPairGenerator]::new()
+$keyParams = [BouncyCastle.Crypto.KeyGenerationParameters]::new($null, 4096)
+$keyPairGenerator.Init($keyParams)
+$keyPair = $keyPairGenerator.GenerateKeyPair()
+
+$privateKeyInfo = [BouncyCastle.OpenSsl.PemWriter]::new([System.IO.File]::CreateText($sshKeyFile))
+$privateKeyInfo.WriteObject($keyPair.Private)
+$privateKeyInfo.Writer.Close()
+
+Write-Host "La clé SSH a été générée avec succès."
+
+
 # Importer le module SSH.NET
 Import-Module -Name SSH.NET
 
