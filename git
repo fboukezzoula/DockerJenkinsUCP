@@ -1,3 +1,35 @@
+# Installer le module SSH.NET s'il n'est pas déjà installé
+if (-not (Get-Module -ListAvailable -Name SSH.NET)) {
+    Install-Module -Name SSH.NET -Scope CurrentUser -Force
+}
+
+# Importer le module SSH.NET
+Import-Module -Name SSH.NET
+
+$sshKeyPath = "C:\chemin\vers\la\clé\ssh"
+$sshKeyFile = "$sshKeyPath\id_rsa"
+
+if (!(Test-Path $sshKeyPath)) {
+    New-Item -ItemType Directory -Path $sshKeyPath | Out-Null
+}
+
+if (Test-Path $sshKeyFile) {
+    Remove-Item $sshKeyFile
+}
+
+# Générer une nouvelle clé SSH RSA sans passphrase en utilisant SSH.NET
+$rsaKey = [Renci.SshNet.SecurityKeyFactory]::KeyGenerate('RSA', 4096)
+$privateKeyContent = [Renci.SshNet.PrivateKeyFile]::new($rsaKey).GetBytes()
+
+Set-Content -Path $sshKeyFile -Value $privateKeyContent -Encoding Byte
+
+Write-Host "La clé SSH a été générée avec succès."
+
+
+
+
+
+
 Add-Type -Path "C:\chemin\vers\BouncyCastle.Crypto.dll"
 
 $sshKeyPath = "C:\chemin\vers\la\clé\ssh"
