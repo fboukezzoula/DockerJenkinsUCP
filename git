@@ -1,3 +1,23 @@
+Vous pouvez télécharger la bibliothèque BouncyCastle depuis le site officiel du projet sur GitHub. Voici les étapes pour télécharger et utiliser la bibliothèque BouncyCastle :
+
+Accédez à la page GitHub de BouncyCastle : https://github.com/bcgit/bc-csharp
+
+Cliquez sur le bouton vert "Code" et sélectionnez "Download ZIP" pour télécharger l'archive ZIP contenant le code source de BouncyCastle.
+
+Extrayez le contenu de l'archive ZIP téléchargée sur votre ordinateur.
+
+Dans le dossier extrait, accédez au sous-dossier bc-csharp\BouncyCastle.Crypto\bin\Release\net471 (ou à un autre sous-dossier approprié en fonction de votre environnement).
+
+Dans ce sous-dossier, vous trouverez le fichier BouncyCastle.OpenSsl.dll. Copiez ce fichier dans le chemin C:\chemin\vers\ spécifié dans le script PowerShell.
+
+Une fois que vous avez copié le fichier BouncyCastle.OpenSsl.dll dans le bon chemin, vous pouvez exécuter le script PowerShell que je vous ai fourni précédemment.
+
+Veuillez noter que les chemins spécifiés (C:\chemin\vers\BouncyCastle.Crypto.dll et C:\chemin\vers\BouncyCastle.OpenSsl.dll) dans le script doivent être modifiés en fonction de l'emplacement réel où vous avez copié les fichiers DLL.
+
+J'espère que cela vous aide. Si vous avez d'autres questions, n'hésitez pas à demander.
+
+
+
 Add-Type -Path "C:\chemin\vers\BouncyCastle.Crypto.dll"
 Add-Type -Path "C:\chemin\vers\BouncyCastle.OpenSsl.dll"
 
