@@ -1,3 +1,32 @@
+Add-Type -Path "C:\chemin\vers\BouncyCastle.Crypto.dll"
+
+$sshKeyPath = "C:\chemin\vers\la\clé\ssh"
+$sshKeyFile = "$sshKeyPath\id_rsa"
+
+if (!(Test-Path $sshKeyPath)) {
+    New-Item -ItemType Directory -Path $sshKeyPath | Out-Null
+}
+
+if (Test-Path $sshKeyFile) {
+    Remove-Item $sshKeyFile
+}
+
+$keyGen = New-Object Org.BouncyCastle.Crypto.Generators.RsaKeyPairGenerator
+$keyGen.Init(New-Object Org.BouncyCastle.Crypto.KeyGenerationParameters -ArgumentList (New-Object Org.BouncyCastle.Security.SecureRandom), 4096)
+
+$keyPair = $keyGen.GenerateKeyPair()
+$privateKeyInfo = [Org.BouncyCastle.OpenSsl.PemWriter]::ToPemObject($keyPair.Private)
+$privateKeyContent = [System.Text.Encoding]::ASCII.GetBytes($privateKeyInfo.Content)
+
+Set-Content -Path $sshKeyFile -Value $privateKeyContent -Encoding Byte
+
+Write-Host "La clé SSH a été générée avec succès."
+
+
+
+
+
+
 # Installer le module SSH.NET s'il n'est pas déjà installé
 if (-not (Get-Module -ListAvailable -Name SSH.NET)) {
     Install-Module -Name SSH.NET -Scope CurrentUser -Force
