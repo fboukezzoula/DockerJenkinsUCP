@@ -1,4 +1,7 @@
 
+https://www.powershellgallery.com/packages/SSH/1.0.0
+
+
 # Importer les modules requis
 Add-Type -Path (Join-Path (Get-Package -Name BouncyCastle).Source 'lib\netstandard2.0\BouncyCastle.Crypto.dll')
 
