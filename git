@@ -1,3 +1,35 @@
+Add-Type -Path "C:\chemin\vers\BouncyCastle.Crypto.dll"
+Add-Type -Path "C:\chemin\vers\BouncyCastle.OpenSsl.dll"
+
+$sshKeyPath = "C:\chemin\vers\la\clé\ssh"
+$sshKeyFile = "$sshKeyPath\id_rsa"
+
+# Vérification si le dossier de la clé SSH existe et le créer s'il n'existe pas
+if (!(Test-Path $sshKeyPath)) {
+    New-Item -ItemType Directory -Path $sshKeyPath | Out-Null
+}
+
+# Vérification si la clé SSH existe déjà et supprimer la clé existante
+if (Test-Path $sshKeyFile) {
+    Remove-Item $sshKeyFile
+}
+
+# Générer une nouvelle clé SSH RSA sans passphrase en utilisant BouncyCastle
+$keyGen = New-Object Org.BouncyCastle.Crypto.Generators.RsaKeyPairGenerator
+$keyGen.Init((New-Object Org.BouncyCastle.Crypto.KeyGenerationParameters -ArgumentList (New-Object Org.BouncyCastle.Security.SecureRandom), 4096))
+
+$keyPair = $keyGen.GenerateKeyPair()
+
+$privateKey = [Org.BouncyCastle.OpenSsl.PemWriter]::ToPemString($keyPair.Private)
+$publicKey = [Org.BouncyCastle.OpenSsl.PemWriter]::ToPemString($keyPair.Public)
+
+Set-Content -Path $sshKeyFile -Value $privateKey
+
+Write-Host "La clé SSH a été générée avec succès."
+
+
+
+
 $sshKeyPath = "C:\chemin\vers\la\clé\ssh"
 $sshKeyFile = "$sshKeyPath\id_rsa"
 
