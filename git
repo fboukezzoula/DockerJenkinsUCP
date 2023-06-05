@@ -1,4 +1,36 @@
 
+Add-Type -Path "C:\chemin\vers\BouncyCastle.Crypto.dll"
+
+$sshKeyPath = "C:\chemin\vers\la\clé\ssh"
+$sshKeyFile = "$sshKeyPath\id_rsa"
+
+if (!(Test-Path $sshKeyPath)) {
+    New-Item -ItemType Directory -Path $sshKeyPath | Out-Null
+}
+
+if (Test-Path $sshKeyFile) {
+    Remove-Item $sshKeyFile
+}
+
+$generator = New-Object Org.BouncyCastle.Crypto.Generators.RsaKeyPairGenerator
+$generator.Init(New-Object Org.BouncyCastle.Crypto.KeyGenerationParameters -ArgumentList 4096, [Math]::Floor((New-Object System.Security.Cryptography.RNGCryptoServiceProvider).GetBytes((New-Object Byte[] 1))[0] / 2) + 1)
+
+$keyPair = $generator.GenerateKeyPair()
+
+$privateKey = $keyPair.Private
+
+$privateKeyContent = [Convert]::ToBase64String($privateKey.GetEncoded())
+
+Set-Content -Path $sshKeyFile -Value "-----BEGIN OPENSSH PRIVATE KEY-----`n$privateKeyContent`n-----END OPENSSH PRIVATE KEY-----"
+
+Write-Host "La clé SSH a été générée avec succès."
+
+
+
+
+
+
+
 https://www.powershellgallery.com/packages/SSH/1.0.0
 
 
