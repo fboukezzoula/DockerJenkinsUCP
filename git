@@ -1,3 +1,6 @@
+Start-Process cmd.exe -ArgumentList "/c commande1 && commande2"
+
+
 ssh -i chemin_vers_la_clé_privée utilisateur@adresse_serveur
 
 
