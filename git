@@ -1,3 +1,8 @@
+ssh -i chemin_vers_la_clé_privée utilisateur@adresse_serveur
+
+
+
+
 HOW TO CONNECT VIA SSH FROM POWERSHELL
 July 11, 2012
 On codeplex (http://sshnet.codeplex.com/) there is a library that can be used for create a powershell SSH client (http://www.powershelladmin.com/wiki/SSH_from_PowerShell_using_the_SSH.NET_library).
