@@ -1,3 +1,547 @@
+HOW TO CONNECT VIA SSH FROM POWERSHELL
+July 11, 2012
+On codeplex (http://sshnet.codeplex.com/) there is a library that can be used for create a powershell SSH client (http://www.powershelladmin.com/wiki/SSH_from_PowerShell_using_the_SSH.NET_library).
+
+First download the library from http://sshnet.codeplex.com/. I used SshNet 4.0 version (you need .net 4.0 installed on your machine).
+
+Check on your powershell the correct path where store the modules:
+
+$env:PSModulePath
+Create inside one of the modules paths a folder called SSH-Modules.
+In my case: C:\Users\aduser\Documents\WindowsPowerShell\Modules\SSH-Sessions
+I put it on my profile, so usable only from my user.
+
+Put the file Renci.SshNet.dll you have downloaded before inside SSH-Sessions
+
+From http://www.powershelladmin.com/wiki/SSH_from_PowerShell_using_the_SSH.NET_library I downloaded the file SSH-Sessions.psd1 and modify it to work with version 4 of library:
+
+# Module manifest for module 'SSH-Sessions.psm1'
+#
+# Created by: Joakim Svendsen
+#
+# Created on: 2012-04-19
+#
+@{
+
+# Script module or binary module file associated with this manifest
+ModuleToProcess = 'SSH-Sessions.psm1'
+
+# Version number of this module.
+ModuleVersion = '1.04'
+
+# ID used to uniquely identify this module
+GUID = ''
+
+# Author of this module
+Author = 'Joakim Svendsen'
+
+# Company or vendor of this module
+CompanyName = 'Svendsen Tech'
+
+# Copyright statement for this module
+Copyright = 'Copyright (c) 2012, Svendsen Tech. All rights reserved.'
+
+# Description of the functionality provided by this module
+Description = 'Provides SSH session creation, management and interaction from PowerShell'
+
+# Minimum version of the Windows PowerShell engine required by this module
+PowerShellVersion = '2.0'
+
+# Name of the Windows PowerShell host required by this module
+PowerShellHostName = ''
+
+# Minimum version of the Windows PowerShell host required by this module
+PowerShellHostVersion = ''
+
+# Minimum version of the .NET Framework required by this module
+DotNetFrameworkVersion = '4.0'
+
+# Minimum version of the common language runtime (CLR) required by this module
+CLRVersion = ''
+
+# Processor architecture (None, X86, Amd64, IA64) required by this module
+ProcessorArchitecture = ''
+
+# Modules that must be imported into the global environment prior to importing this module
+RequiredModules = @()
+
+# Assemblies that must be loaded prior to importing this module
+RequiredAssemblies = @('Renci.SshNet.dll')
+
+# Script files (.ps1) that are run in the caller's environment prior to importing this module
+ScriptsToProcess = @()
+
+# Type files (.ps1xml) to be loaded when importing this module
+TypesToProcess = @()
+
+# Format files (.ps1xml) to be loaded when importing this module
+FormatsToProcess = @()
+
+# Modules to import as nested modules of the module specified in ModuleToProcess
+NestedModules = @()
+
+# Functions to export from this module
+FunctionsToExport = '*'
+
+# Cmdlets to export from this module
+CmdletsToExport = '*'
+
+# Variables to export from this module
+VariablesToExport = '*'
+
+# Aliases to export from this module
+AliasesToExport = '*'
+
+# List of all modules packaged with this module
+ModuleList = @()
+
+# List of all files packaged with this module
+FileList = @('Renci.SshNet.dll', 'SSH-Sessions.psm1', 'SSH-Sessions.psd1')
+
+# Private data to pass to the module specified in ModuleToProcess
+PrivateData = ''
+
+}
+Same for file SSH-Sessions.psm1
+
+# Function to convert a secure string to a plain text password.
+# See http://www.powershelladmin.com/wiki/Powershell_prompt_for_password_convert_securestring_to_plain_text
+function ConvertFrom-SecureToPlain {
+
+    param( [Parameter(Mandatory=$true)][System.Security.SecureString] $SecurePassword)
+
+    # Create a "password pointer"
+    $PasswordPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
+
+    # Get the plain text version of the password
+    $PlainTextPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto($PasswordPointer)
+
+    # Free the pointer
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($PasswordPointer)
+
+    # Return the plain text password
+    $PlainTextPassword
+
+}
+
+function New-SshSession {
+
+    param([Parameter(Mandatory=$true)][string[]] $ComputerName,
+          [Parameter(Mandatory=$true)][string]   $Username,
+          [string] $KeyFile = '',
+          [string] $Password = 'SvendsenTechDefault', # I guess allowing for a blank password is "wise"...
+          [int] $Port = 22
+    )
+
+    if ($KeyFile -ne '') {
+
+        "Key file specified. Will override password. Trying to read key file..."
+
+        if (Test-Path -PathType Leaf -Path $Keyfile) {
+
+            $Key = New-Object Renci.SshNet.PrivateKeyFile( $Keyfile )
+
+        }
+
+        else {
+
+            "Specified keyfile does not exist: '$KeyFile'."
+            return
+
+        }
+
+    }
+
+    else {
+
+        $Key = $false
+
+    }
+
+    # Prompt for password if none was supplied on the command line, and no key was provided.
+    if (-not $Key -and $Password -ceq 'SvendsenTechDefault') {
+
+        $SecurePassword = Read-Host -AsSecureString "No key provided. Enter SSH password for $Username"
+        $Password = ConvertFrom-SecureToPlain $SecurePassword
+
+    }
+
+    # Let's start creating sessions and storing them in $global:SshSessions
+    foreach ($Computer in $ComputerName) {
+
+        if ($global:SshSessions.ContainsKey($Computer) -and $global:SshSessions.$Computer.IsConnected) {
+
+            "You are already connected to $Computer"
+            continue
+
+        }
+
+        try {
+
+            if ($Key) {
+
+                $SshClient = New-Object Renci.SshNet.SshClient($Computer, $Port, $Username, $Key)
+
+            }
+
+            else {
+
+                $SshClient = New-Object Renci.SshNet.SshClient($Computer, $Port, $Username, $Password)
+
+            }
+
+        }
+
+        catch {
+
+            "Unable to create SSH client object for ${Computer}: $_"
+            continue
+
+        }
+
+        try {
+
+            $SshClient.Connect()
+
+        }
+
+        catch {
+
+            "Unable to connect to ${Computer}: $_"
+            continue
+
+        }
+
+        if ($SshClient -and $SshClient.IsConnected) {
+
+            "Successfully connected to $Computer"
+            $global:SshSessions.$Computer = $SshClient
+
+        }
+
+        else {
+
+            "Unable to connect to ${Computer}"
+            continue
+
+        }
+
+    } # end of foreach
+
+    # Shrug... Can't hurt although I guess they should go out of scope here anyway.
+    $SecurePassword, $Password = $null, $null
+
+}
+
+function Invoke-SshCommand {
+
+    param([string[]] $ComputerName, # can't have it mandatory due to -InvokeOnAll...
+          [Parameter(Mandatory=$true)][string] $Command,
+          [switch] $Quiet,
+          [switch] $InvokeOnAll
+    )
+
+    if ($InvokeOnAll) {
+
+        if ($ComputerName) {
+
+            $Answer = Read-Host -Prompt "You specified both -InvokeOnAll and -ComputerName. -InvokeOnAll overrides and targets all hosts.`nAre you sure you want to continue? (y/n) [yes]"
+            if ($Answer -imatch '^n') { return }
+
+        }
+
+        if ($global:SshSessions.Keys.Count -eq 0) {
+
+            "-InvokeOnAll specified, but no hosts found."
+            return
+
+        }
+
+        # Get all computer names from the global SshSessions hashtable.
+        $ComputerName = $global:SshSessions.Keys | Sort-Object
+
+    }
+
+    if (-not $ComputerName) {
+
+        "No computer names specified and -InvokeOnAll not specified. Can not continue."
+        return
+
+    }
+
+    foreach ($Computer in $ComputerName) {
+
+        if (-not $global:SshSessions.ContainsKey($Computer)) {
+
+            Write-Host -Fore Red "No SSH session found for $Computer. See Get-Help New-SshSession. Skipping."
+            "No SSH session found for $Computer. See Get-Help New-SshSession. Skipping."
+            continue
+
+        }
+
+        if (-not $global:SshSessions.$Computer.IsConnected) {
+
+            Write-Host -Fore Red "You are no longer connected to $Computer. Skipping."
+            "You are no longer connected to $Computer. Skipping."
+            continue
+
+        }
+
+        $CommandObject = $global:SshSessions.$Computer.RunCommand($Command)
+
+        # Write pretty, colored results with Write-Host unless the quiet switch is provided.
+        if (-not $Quiet) {
+
+            if ($CommandObject.ExitStatus -eq 0) {
+
+                Write-Host -Fore Green -NoNewline "${Computer}: "
+                Write-Host -Fore Cyan ($CommandObject.Result -replace '[\r\n]+\z', '')
+
+            }
+
+            else {
+
+                Write-Host -Fore Green -NoNewline "${Computer} "
+                Write-Host -Fore Yellow 'had an error:' ($CommandObject.Error -replace '[\r\n]+\z', '')
+
+            }
+
+        }
+
+        # Now emit to the pipeline
+        if ($CommandObject.ExitStatus -eq 0) {
+
+            # Emit results to the pipeline. Twice the fun unless you're assigning the results to a variable.
+            # Changed from .Trim(). Remove the trailing carriage returns and newlines that might be there,
+            # in case leading whitespace matters in later processing. Not sure I should even be doing this.
+            $CommandObject.Result -replace '[\r\n]+\z', ''
+
+        }
+
+        else {
+
+            # Emit error to the pipeline. Twice the fun unless you're assigning the results to a variable.
+            # Changed from .Trim(). Remove the trailing carriage returns and newlines that might be there,
+            # in case leading whitespace matters in later processing. Not sure I should even be doing this.
+            $CommandObject.Error -replace '[\r\n]+\z', ''
+
+        }
+
+        $CommandObject.Dispose()
+        $CommandObject = $null
+
+    }
+
+}
+
+function Enter-SshSession {
+
+    param([Parameter(Mandatory=$true)][string] $ComputerName,
+          [switch] $NoPwd
+    )
+
+    if (-not $global:SshSessions.ContainsKey($ComputerName)) {
+
+        "No SSH session found for $Computer. See Get-Help New-SshSession. Skipping."
+        return
+
+    }
+
+    if (-not $global:SshSessions.$ComputerName.IsConnected) {
+
+        "The connection to $Computer has been lost"
+        return
+
+    }
+
+    $SshPwd = ''
+
+    # Get the default working dir of the user (won't be updated...)
+    if (-not $NoPwd) {
+
+        $SshPwdResult = $global:SshSessions.$ComputerName.RunCommand('pwd')
+
+        if ($SshPwdResult.ExitStatus -eq 0) {
+
+            $SshPwd = $SshPwdResult.Result.Trim()
+
+        }
+
+        else {
+
+            $SshPwd = '(pwd failed)'
+
+        }
+
+    }
+
+    $Command = ''
+
+    while (1) {
+
+        if (-not $global:SshSessions.$ComputerName.IsConnected) {
+
+            "Connection to $Computer lost"
+            return
+
+        }
+
+        $Command = Read-Host -Prompt "[$ComputerName]: $SshPwd # "
+
+        # Break out of the infinite loop if they type "exit" or "quit"
+        if ($Command -ieq 'exit' -or $Command -ieq 'quit') { break }
+
+        $Result = $global:SshSessions.$ComputerName.RunCommand($Command)
+
+        if ($Result.ExitStatus -eq 0) {
+
+            $Result.Result -replace '[\r\n]+\z', ''
+
+        }
+
+        else {
+
+            $Result.Error -replace '[\r\n]+\z', ''
+
+        }
+
+    } # end of while
+
+}
+
+function Remove-SshSession {
+
+    param([string[]] $ComputerName, # can't have it mandatory due to -RemoveAll
+          [switch]   $RemoveAll
+    )
+
+    if ($RemoveAll) {
+
+        if ($ComputerName) {
+
+            $Answer = Read-Host -Prompt "You specified both -RemoveAll and -ComputerName. -RemoveAll overrides and removes all connections.`nAre you sure you want to continue? (y/n) [yes]"
+            if ($Answer -imatch '^n') { return }
+
+        }
+
+        if ($global:SshSessions.Keys.Count -eq 0) {
+
+            "-RemoveAll specified, but no hosts found."
+            return
+
+        }
+
+        # Get all computer names from the global SshSessions hashtable.
+        $ComputerName = $global:SshSessions.Keys | Sort-Object
+
+    }
+
+    if (-not $ComputerName) {
+
+        "No computer names specified and -RemoveAll not specified. Can not continue."
+        return
+
+    }
+
+    foreach ($Computer in $ComputerName) {
+
+        if (-not $global:SshSessions.ContainsKey($Computer)) {
+
+            "The global `$SshSessions variable doesn't contain a session for $Computer. Skipping."
+            continue
+
+        }
+
+        $ErrorActionPreference = 'Continue'
+
+        if ($global:SshSessions.$Computer.IsConnected) { $global:SshSessions.$Computer.Disconnect() }
+        $global:SshSessions.$Computer.Dispose()
+        $global:SshSessions.$Computer = $null
+        $global:SshSessions.Remove($Computer)
+
+        $ErrorActionPreferene = 'Stop'
+
+        "$Computer should now be disconnected and disposed."
+
+    }
+
+}
+
+function Get-SshSession {
+
+    param( [string[]] $ComputerName )
+
+    # Just exit with a message if there aren't any connections.
+    if ($global:SshSessions.Count -eq 0) { "No connections found"; return }
+
+    # Unless $ComputerName is specified, use all hosts in the global variable, sorted alphabetically.
+    if (-not $ComputerName) { $ComputerName = $global:SshSessions.Keys | Sort-Object }
+
+    $Properties =
+        @{n='ComputerName';e={$_}},
+        @{n='Connected';e={
+
+            # Ok, this isn't too pretty... Populate non-existing objects'
+            # "connected" value with "NULL".
+            if ($global:SshSessions.ContainsKey($_)) {
+
+                $global:SshSessions.$_.IsConnected
+
+            }
+            else {
+
+                'NULL'
+
+            }
+        }}
+
+    # Process the hosts and emit output to the pipeline.
+    $ComputerName | Select-Object $Properties
+
+}
+
+######## END OF FUNCTIONS ########
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+$global:SshSessions = @{}
+
+Export-ModuleMember New-SshSession, Invoke-SshCommand, Enter-SshSession, `
+                    Remove-SshSession, Get-SshSession, ConvertFrom-SecureToPlain
+Copy the files SSH-Sessions.psd1 and SSH-Sessions.psm1 inside the module folder SSH-Sessions.
+
+You are now ready to lunch powershell and import SSH-Modules:
+
+Import-Module SSH-Sessions
+Create a new SSH Session:
+
+New-SshSession -ComputerName 192.168.1.1 -Username MyUser
+Advertisements
+
+REPORT THIS ADPRIVACY
+
+and enter to interactive session:
+
+Enter-SshSession -ComputerName 192.168.1.1
+for disconnect ssh session use this command:
+
+Remove-SshSession -RemoveAll
+Remember to modify security on powershell making script running…
+
+Via: http://www.powershelladmin.com/wiki/SSH_from_PowerShell_using_the_SSH.NET_library
+
+Advertisements
+
+
+
+
+
+
+
+
+
+
 $sshKeyPath = "D:\ssh"
 $sshKeyFile = "$sshKeyPath\id_rsa"
 $sshPublicKeyFile = "$sshKeyPath\id_rsa.pub"
