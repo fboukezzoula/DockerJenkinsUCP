@@ -1,3 +1,6 @@
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -File VotreScript.ps1
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -File VotreScript.ps1
+
 Start-Process cmd.exe -ArgumentList "/c commande1 && commande2"
 
 
