@@ -1,4 +1,8 @@
-C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -File VotreScript.ps1
+
+git checkout <branch_name_to_be_squashed>
+git rebase -i HEAD~<count>
+git push --force-with-lease
+
 C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -File VotreScript.ps1
 
 Start-Process cmd.exe -ArgumentList "/c commande1 && commande2"
