@@ -33,6 +33,15 @@ git checkout <branch_name_to_be_squashed>
 git rebase -i HEAD~<count>
 git push --force-with-lease
 
+
+
+
+
+
+
+
+
+
 C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -File VotreScript.ps1
 
 Start-Process cmd.exe -ArgumentList "/c commande1 && commande2"
@@ -1289,3 +1298,83 @@ Fermez toutes les instances de PowerShell existantes et ouvrez une nouvelle sess
 Maintenant, lorsque vous exécutez votre script .ps1 à partir du script batch, une fois le script terminé, vous devriez revenir à l'invite de commande de PowerShell avec le prompt personnalisé que vous avez défini dans votre profil PowerShell.
 
 Notez que cela affectera tous les prompts dans PowerShell, pas seulement après l'exécution du script .ps1.
+
+
+
+
+
+
+Créez un fichier de service systemd avec la commande suivante :
+bash
+Copy code
+sudo nano /etc/systemd/system/docker-prune.service
+Ajoutez le code suivant dans le fichier :
+makefile
+Copy code
+[Unit]
+Description=Service de maintenance Docker pour nettoyer les ressources non utilisées
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker system prune -f
+WorkingDirectory=/
+StandardOutput=journal
+User=root
+
+[Install]
+WantedBy=multi-user.target
+Enregistrez et fermez le fichier.
+
+Exécutez la commande suivante pour recharger les fichiers de configuration systemd :
+
+Copy code
+sudo systemctl daemon-reload
+Planifiez le service pour qu'il s'exécute tous les dimanches à 10h du matin en utilisant la commande suivante :
+bash
+Copy code
+sudo systemctl enable --now docker-prune.timer
+Cela devrait créer un service systemd appelé docker-prune.service qui nettoie les ressources non utilisées avec la commande docker system prune -f, et un minuteur systemd appelé docker-prune.timer qui déclenche le service tous les dimanches à 10h du matin.
+
+Vous pouvez utiliser les commandes suivantes pour gérer le service :
+
+Pour démarrer le service : sudo systemctl start docker-prune.service
+Pour arrêter le service : sudo systemctl stop docker-prune.service
+Pour redémarrer le service : sudo systemctl restart docker-prune.service
+Pour afficher l'état du service : sudo systemctl status docker-prune.service
+
+Pardon, j'ai omis d'inclure la définition de la planification dans les étapes. Voici comment planifier le service pour qu'il s'exécute tous les dimanches à 10h :
+
+Créez un fichier de minuteur systemd avec la commande suivante :
+bash
+Copy code
+sudo nano /etc/systemd/system/docker-prune.timer
+Ajoutez le code suivant dans le fichier :
+makefile
+Copy code
+[Unit]
+Description=Timer for Docker maintenance service
+
+[Timer]
+OnCalendar=Sun 10:00:00
+Unit=docker-prune.service
+
+[Install]
+WantedBy=timers.target
+Enregistrez et fermez le fichier.
+
+Exécutez la commande suivante pour recharger les fichiers de configuration systemd :
+
+Copy code
+sudo systemctl daemon-reload
+Activez le minuteur pour qu'il démarre automatiquement à chaque redémarrage du système avec la commande suivante :
+bash
+Copy code
+sudo systemctl enable docker-prune.timer
+Maintenant, le service docker-prune.service sera déclenché par le minuteur docker-prune.timer tous les dimanches à 10h.
+
+Vous pouvez utiliser les commandes suivantes pour gérer le minuteur :
+
+Pour démarrer le minuteur : sudo systemctl start docker-prune.timer
+Pour arrêter le minuteur : sudo systemctl stop docker-prune.timer
+Pour afficher l'état du minuteur : sudo systemctl status docker-prune.timer
