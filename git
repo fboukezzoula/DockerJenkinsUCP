@@ -1,3 +1,33 @@
+# Ouvrir le navigateur
+$ie = New-Object -ComObject InternetExplorer.Application
+$ie.Visible = $true
+
+# Attendre que le navigateur soit prêt
+while ($ie.Busy) {
+    Start-Sleep -Milliseconds 100
+}
+
+# Naviguer vers une page (vous pouvez remplacer "https://example.com" par votre URL)
+$ie.Navigate("https://example.com")
+
+# Attendre que la page soit complètement chargée
+while ($ie.ReadyState -ne 4) {
+    Start-Sleep -Milliseconds 100
+}
+
+# Copier le contenu du presse-papiers dans le champ de saisie
+$clipboardData = Get-Clipboard
+$ie.Document.getElementById("id_du_champ_de_saisie").value = $clipboardData
+
+# Fermer le navigateur (vous pouvez commenter cette ligne si vous souhaitez le laisser ouvert)
+$ie.Quit()
+
+
+# Rechercher et cliquer sur le bouton "OK"
+$okButton = $ie.Document.getElementById("id_du_bouton_OK")
+$okButton.click()
+
+
 
 git checkout <branch_name_to_be_squashed>
 git rebase -i HEAD~<count>
