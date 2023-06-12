@@ -1,3 +1,69 @@
+# Ouvrir Microsoft Edge
+Start-Process microsoft-edge
+
+# Attendre que le navigateur soit prêt
+while (!(Get-Process microsoft-edge -ErrorAction SilentlyContinue)) {
+    Start-Sleep -Milliseconds 100
+}
+
+# Naviguer vers une page (vous pouvez remplacer "https://example.com" par votre URL)
+Start-Process microsoft-edge -ArgumentList "https://example.com"
+
+# Attendre que la page soit complètement chargée
+while ((Invoke-WebRequest -Uri "https://example.com" -Method Head).StatusCode -ne 200) {
+    Start-Sleep -Milliseconds 100
+}
+
+# Copier le contenu du presse-papiers dans le champ de saisie
+$clipboardData = Get-Clipboard
+$edgeProcess = Get-Process microsoft-edge
+$edgeMainWindowHandle = $edgeProcess.MainWindowHandle
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+
+public class ClipboardHelper
+{
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+}
+
+public class Win32Constants
+{
+    public const uint WM_SETTEXT = 0x000C;
+    public const int WM_KEYDOWN = 0x0100;
+    public const int WM_KEYUP = 0x0101;
+    public const int VK_CONTROL = 0x11;
+    public const int VK_V = 0x56;
+    public const int VK_RETURN = 0x0D;
+}
+"@
+
+$edgeWindowHandle = [ClipboardHelper]::FindWindow(null, $edgeMainWindowHandle.MainWindowTitle)
+$edgeAddressBarHandle = [ClipboardHelper]::FindWindowEx($edgeWindowHandle, IntPtr::Zero, "Edit", null)
+[ClipboardHelper]::SetForegroundWindow($edgeAddressBarHandle)
+[ClipboardHelper]::SendMessage($edgeAddressBarHandle, [Win32Constants]::WM_SETTEXT, IntPtr::Zero, [IntPtr]::Zero)
+[System.Windows.Forms.SendKeys]::SendWait("$clipboardData")
+
+# Rechercher et cliquer sur le bouton "OK"
+Start-Sleep -Seconds 2  # Attendre quelques secondes pour laisser le texte se coller dans la barre d'adresse
+$edgeAddressBarHandle = [ClipboardHelper]::FindWindowEx($edgeWindowHandle, IntPtr::Zero, "Edit", null)
+$edgeAddressBarHandle | Out-Null  # Supprimer la sortie
+[ClipboardHelper]::SendMessage($edgeAddressBarHandle, [Win32Constants]::WM_KEYDOWN, [IntPtr]::new([Win32Constants]::VK_RETURN), [IntPtr]::Zero)
+[ClipboardHelper]::SendMessage($edgeAddressBarHandle, [Win32Constants]::WM_KEYUP, [IntPtr]::new([Win32Constants]::VK_RETURN), [IntPtr]::Zero)
+
+
+
+
 # Ouvrir le navigateur
 $ie = New-Object -ComObject InternetExplorer.Application
 $ie.Visible = $true
