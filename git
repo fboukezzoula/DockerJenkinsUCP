@@ -1,6 +1,31 @@
 git commit --amend --no-edit
 
 
+# Chemin vers la clé de registre contenant le navigateur par défaut
+$browserRegistryPath = "HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice"
+$browserRegistryValue = "ProgId"
+
+# Lire la valeur du registre pour récupérer le navigateur par défaut
+$defaultBrowser = (Get-ItemProperty -Path $browserRegistryPath -Name $browserRegistryValue).$browserRegistryValue
+
+# Ouvrir la page en fonction du navigateur par défaut
+switch ($defaultBrowser) {
+    "ChromeHTML" {
+        Start-Process chrome.exe -ArgumentList "http://URL" --start-minimized
+        break
+    }
+    "AppXq0fevzme2pys62n3e0fbqa7peapykr8v" {
+        Start-Process msedge.exe -ArgumentList "http://URL" -WindowStyle Minimized
+        break
+    }
+    # Ajoutez d'autres cas pour les navigateurs supplémentaires
+    default {
+        Write-Host "Navigateur par défaut non pris en charge."
+    }
+}
+
+
+
 #Ouvrir Microsoft Edge
 Start-Process microsoft-edge
 
