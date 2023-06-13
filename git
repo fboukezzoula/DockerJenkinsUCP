@@ -1,4 +1,7 @@
-# Ouvrir Microsoft Edge
+git commit --amend --no-edit
+
+
+#Ouvrir Microsoft Edge
 Start-Process microsoft-edge
 
 # Attendre que le navigateur soit prêt
