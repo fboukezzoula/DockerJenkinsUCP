@@ -1,6 +1,17 @@
 git commit --amend --no-edit
 
 
+$response = Invoke-RestMethod -Uri "https://api.example.com" -Method GET
+$resultat = $response.RawContent
+
+# Recherche de la ligne contenant la chaîne de caractères spécifique
+$line = $resultat | Select-String -Pattern "chaîne de caractères"
+
+# Affichage de la ligne trouvée
+$line.Line
+
+
+
 
 $chromeProcess = Start-Process "chrome.exe" -ArgumentList "http://URL" -PassThru
 Start-Sleep -Seconds 5  # Attendre que Chrome se lance (ajustez si nécessaire)
