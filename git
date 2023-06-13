@@ -1,6 +1,48 @@
 git commit --amend --no-edit
 
 
+
+$chromeProcess = Start-Process "chrome.exe" -ArgumentList "http://URL" -PassThru
+Start-Sleep -Seconds 5  # Attendre que Chrome se lance (ajustez si nécessaire)
+
+$pinvokeCode = @'
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+public class WindowHelper
+{
+    [DllImport("user32.dll")]
+    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+    public const int SW_MINIMIZE = 6;
+}
+
+public class ChromeHelper
+{
+    public static void MinimizeChrome()
+    {
+        Process[] chromeProcesses = Process.GetProcessesByName("chrome");
+        foreach (Process chromeProcess in chromeProcesses)
+        {
+            IntPtr chromeMainWindowHandle = chromeProcess.MainWindowHandle;
+            WindowHelper.ShowWindow(chromeMainWindowHandle, WindowHelper.SW_MINIMIZE);
+        }
+    }
+}
+'@
+
+Add-Type -TypeDefinition $pinvokeCode
+[ChromeHelper]::MinimizeChrome()
+
+
+
+
+
+
 # Chemin vers la clé de registre contenant le navigateur par défaut
 $browserRegistryPath = "HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice"
 $browserRegistryValue = "ProgId"
