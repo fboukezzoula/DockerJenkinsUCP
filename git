@@ -1,6 +1,24 @@
 git commit --amend --no-edit
 
 
+
+$response = Invoke-RestMethod -Uri "https://api.example.com" -Method GET
+$resultat = $response.RawContent -split "`n"
+
+# Parcourir chaque ligne du résultat
+foreach ($ligne in $resultat) {
+    # Vérifier si la ligne contient la chaîne de caractères spécifique
+    if ($ligne -like "*chaîne de caractères*") {
+        $ligne  # Afficher la ligne trouvée
+        break  # Sortir de la boucle une fois que la ligne est trouvée
+    }
+}
+
+
+
+
+
+
 $response = Invoke-RestMethod -Uri "https://api.example.com" -Method GET
 $resultat = $response.RawContent
 
