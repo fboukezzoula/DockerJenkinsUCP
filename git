@@ -1,3 +1,130 @@
+name: HelloWorld Paralell Jobs
+
+on:
+  workflow_dispatch:
+    inputs:
+      launcher:
+        description: 'Person to launch this workflow'
+        required: false
+        default: 'Fouzi'
+
+env:
+  MYPAT: ${{ secrets.MYPAT }}
+  SHA: ${{ github.sha }}
+  AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+  AZURE_STORAGE_ACCESS_KEY: ${{ secrets.AZURE_STORAGE_ACCESS_KEY }}
+
+jobs:
+   Job01:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.MYPAT }}
+      - name: Build image
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: make build
+      - name: Login to container registry
+        env:
+          SERVICE_PRINCIPAL_APP_ID: ${{ secrets.SERVICE_PRINCIPAL_APP_ID }}
+          SERVICE_PRINCIPAL_SECRET: ${{ secrets.SERVICE_PRINCIPAL_SECRET }}
+          SERVICE_PRINCIPAL_TENANT: ${{ secrets.SERVICE_PRINCIPAL_TENANT }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: make registry-login
+      - name: Push image
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: make push
+      - name: Get AKS credentials
+        env:
+          CLUSTER_RESOURCE_GROUP_NAME: ${{ secrets.CLUSTER_RESOURCE_GROUP_NAME }}
+          CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
+        run: |
+          az aks get-credentials \
+            --resource-group $CLUSTER_RESOURCE_GROUP_NAME \
+            --name $CLUSTER_NAME \
+            --overwrite-existing
+      - name: Deploy application
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: make deploy 
+      - name: Create new file and upload it to blob container
+        run: |
+          mkdir -p /tmp/buildhelloworld
+          touch /tmp/buildhelloworld/build_number_$(date '+%Y%m%d%H%M%S').txt 
+
+          cd /tmp/buildhelloworld/
+          # Upload sample files to container
+          az storage blob upload-batch --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" -d showcase -s . --overwrite
+      - name: Launch the workflow with API
+        env:
+          MYPAT: ${{ secrets.MYPAT }}
+        run: |
+          curl -X POST \
+            --header "Authorization: Bearer $MYPAT" \
+            --header "Accept: application/vnd.github.v3+json" \
+            --url "https://api.github.com/repos/fboukezzoula/helloworld/actions/workflows/AKS_workflow.yml/dispatches" \
+            --data '{"ref":"main", "inputs": { "launcher":"Fouzi"}}'
+
+   Job02:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.MYPAT }}
+      - name: Build image
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: make build
+      - name: Login to container registry
+        env:
+          SERVICE_PRINCIPAL_APP_ID: ${{ secrets.SERVICE_PRINCIPAL_APP_ID }}
+          SERVICE_PRINCIPAL_SECRET: ${{ secrets.SERVICE_PRINCIPAL_SECRET }}
+          SERVICE_PRINCIPAL_TENANT: ${{ secrets.SERVICE_PRINCIPAL_TENANT }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: make registry-login
+      - name: Push image
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: make push
+      - name: Get AKS credentials
+        env:
+          CLUSTER_RESOURCE_GROUP_NAME: ${{ secrets.CLUSTER_RESOURCE_GROUP_NAME }}
+          CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
+        run: |
+          az aks get-credentials \
+            --resource-group $CLUSTER_RESOURCE_GROUP_NAME \
+            --name $CLUSTER_NAME \
+            --overwrite-existing
+      - name: Deploy application
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: make deploy 
+      - name: Create new file and upload it to blob container
+        run: |
+          mkdir -p /tmp/buildhelloworld
+          touch /tmp/buildhelloworld/build_number_$(date '+%Y%m%d%H%M%S').txt 
+
+          cd /tmp/buildhelloworld/
+          # Upload sample files to container
+          az storage blob upload-batch --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" -d showcase -s . --overwrite
+      - name: Launch the workflow with API
+        env:
+          MYPAT: ${{ secrets.MYPAT }}
+        run: |
+          curl -X POST \
+            --header "Authorization: Bearer $MYPAT" \
+            --header "Accept: application/vnd.github.v3+json" \
+            --url "https://api.github.com/repos/fboukezzoula/helloworld/actions/workflows/AKS_workflow.yml/dispatches" \
+            --data '{"ref":"main", "inputs": { "launcher":"Fouzi"}}'
+
+
+
 git commit --amend --no-edit
 
 
