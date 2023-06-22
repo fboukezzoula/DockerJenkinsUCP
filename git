@@ -1,13 +1,11 @@
 Write-Host "Appuyez sur la touche Entrée pour continuer..."
-$null = $Host.UI.RawUI.FlushInputBuffer()
+$continue = $false
 
-# Exécute la commande "Timeout" avec une durée de 5 minutes (300 secondes)
-$timeoutCommand = "Timeout /T 300 /Nobreak"
-$timeoutProcess = Start-Process -FilePath cmd.exe -ArgumentList "/C $timeoutCommand" -WindowStyle Hidden -PassThru
+$timeout = New-TimeSpan -Minutes 5
+$startTime = Get-Date
 
 # Attente de l'appui sur la touche Entrée ou du délai d'attente
-$continue = $false
-while (-not $continue -and -not $timeoutProcess.HasExited) {
+while (-not $continue) {
     if ($Host.UI.RawUI.KeyAvailable) {
         $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
         if ($key.Key -eq "Enter") {
@@ -15,22 +13,22 @@ while (-not $continue -and -not $timeoutProcess.HasExited) {
             break
         }
     }
+
+    $currentTime = Get-Date
+    $elapsedTime = $currentTime - $startTime
+
+    if ($elapsedTime -ge $timeout) {
+        Write-Host "Temps écoulé. Sortie en erreur."
+        exit 1
+    }
+
     Start-Sleep -Milliseconds 100
-}
-
-# Arrêter le processus "Timeout" s'il est en cours d'exécution
-if (-not $timeoutProcess.HasExited) {
-    Stop-Process -Id $timeoutProcess.Id
-}
-
-if (-not $continue) {
-    Write-Host "Temps écoulé. Sortie en erreur."
-    exit 1
 }
 
 # Le script continue ici
 Write-Host "Continuer le traitement..."
 # Votre code supplémentaire
+
 
 
 
