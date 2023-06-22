@@ -1,3 +1,47 @@
+Add-Type -TypeDefinition @"
+    using System;
+    using System.Runtime.InteropServices;
+    public class KeyboardUtils {
+        [DllImport("user32.dll")]
+        public static extern short GetAsyncKeyState(int vKey);
+    }
+"@
+
+Write-Host "Appuyez sur la touche Entrée pour continuer..."
+$continue = $false
+
+$timeout = New-TimeSpan -Minutes 5
+$startTime = Get-Date
+
+# Attente de l'appui sur la touche Entrée ou du délai d'attente
+while (-not $continue) {
+    $enterKeyState = [KeyboardUtils]::GetAsyncKeyState(13)
+
+    if ($enterKeyState -band 1) {
+        $continue = $true
+        break
+    }
+
+    $currentTime = Get-Date
+    $elapsedTime = $currentTime - $startTime
+
+    if ($elapsedTime -ge $timeout) {
+        Write-Host "Temps écoulé. Sortie en erreur."
+        exit 1
+    }
+
+    Start-Sleep -Milliseconds 100
+}
+
+# Le script continue ici
+Write-Host "Continuer le traitement..."
+# Votre code supplémentaire
+
+
+
+
+
+
 Write-Host "Appuyez sur la touche Entrée pour continuer..."
 $continue = $false
 
