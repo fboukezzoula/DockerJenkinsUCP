@@ -31,41 +31,6 @@ Write-Host "Continuer le traitement..."
 
 
 
-
-
-
-
-$timeout = New-TimeSpan -Minutes 5
-$endTime = (Get-Date).AddMinutes(5)
-$continue = $false
-
-Write-Host "Appuyez sur la touche Entrée pour continuer..."
-$null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-
-while ((Get-Date) -lt $endTime) {
-    if ($host.UI.RawUI.KeyAvailable) {
-        $key = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        if ($key.Key -eq "Enter") {
-            $continue = $true
-            break
-        }
-    }
-    Start-Sleep -Milliseconds 100
-}
-
-if (-not $continue) {
-    Write-Host "Temps écoulé. Sortie en erreur."
-    exit 1
-}
-
-# Le script continue ici
-Write-Host "Continuer le traitement..."
-# Votre code supplémentaire
-
-
-
-
-
 name: HelloWorld Paralell Jobs
 
 on:
