@@ -1,3 +1,109 @@
+To install a GitHub app on a specific repository using PowerShell, you can use the GitHub REST API. Here's a step-by-step guide to achieve this:
+
+Generate a JSON Web Token (JWT) using your private key. This token will be used to authenticate the installation of the GitHub app on the repository. Make sure you have the app_id, client_id, and the private_key handy. You can use libraries like jwt.io or openssl to generate the JWT.
+
+Obtain an access token using the JWT and the app's client_id. This access token will be used to authenticate API requests on behalf of the GitHub app.
+
+Install the GitHub app on the desired repository using the access token.
+
+Let's go through the steps:
+
+Step 1: Generate a JSON Web Token (JWT)
+You can use PowerShell to generate the JWT. Assuming you have openssl installed on your system, you can use the following command:
+
+******************************
+# Replace 'APP_ID' with your GitHub app's ID
+$APP_ID = 'APP_ID'
+# Replace 'PRIVATE_KEY_FILE_PATH' with the path to your private key file
+$PRIVATE_KEY_FILE_PATH = 'PRIVATE_KEY_FILE_PATH'
+
+$JWT_HEADER = '{"alg":"RS256","typ":"JWT"}'
+$JWT_CLAIMS = @{
+    iat = [math]::truncate([datetime]::utcnow.subtotalmilliseconds / 1000)
+    exp = [math]::truncate(([datetime]::utcnow + [timespan]::fromminutes(10)).subtotalmilliseconds / 1000)
+    iss = $APP_ID
+}
+$JWT_CLAIMS_JSON = $JWT_CLAIMS | ConvertTo-Json -Compress
+$JWT_CLAIMS_BASE64 = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($JWT_CLAIMS_JSON))
+$JWT_HEADER_BASE64 = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($JWT_HEADER))
+
+$JWT_PART1 = $JWT_HEADER_BASE64
+$JWT_PART2 = $JWT_CLAIMS_BASE64
+
+# Create the signature using openssl
+$signature = & openssl dgst -sha256 -sign $PRIVATE_KEY_FILE_PATH | ForEach-Object { [System.Convert]::ToBase64String($_) }
+$JWT_PART3 = $signature
+
+$JWT = $JWT_PART1 + "." + $JWT_PART2 + "." + $JWT_PART3
+******************************
+
+
+Step 2: Obtain an access token
+To obtain an access token, you'll need to send a POST request to the GitHub API. Replace 'CLIENT_ID' with your app's client ID.
+
+
+****************************
+$CLIENT_ID = 'CLIENT_ID'
+
+$RequestBody = @{
+    client_id     = $CLIENT_ID
+    exp           = [math]::truncate(([datetime]::utcnow + [timespan]::fromminutes(10)).subtotalmilliseconds / 1000)
+    iat           = [math]::truncate([datetime]::utcnow.subtotalmilliseconds / 1000)
+} | ConvertTo-Json
+
+$AccessTokenResponse = Invoke-RestMethod -Uri "https://api.github.com/app/installations/$APP_ID/access_tokens" `
+                                        -Method Post `
+                                        -Headers @{ 'Authorization' = "Bearer $JWT" } `
+                                        -Body $RequestBody `
+                                        -ContentType 'application/json'
+****************************
+
+Step 3: Install the GitHub app on the repository
+Replace 'REPO_OWNER' and 'REPO_NAME' with the owner and name of the repository where you want to install the app.
+
+
+
+$ACCESS_TOKEN = $AccessTokenResponse.token
+
+$RepoOwner = 'REPO_OWNER'
+$RepoName = 'REPO_NAME'
+
+$InstallAppResponse = Invoke-RestMethod -Uri "https://api.github.com/repos/$RepoOwner/$RepoName/installations" `
+                                        -Method Post `
+                                        -Headers @{ 'Authorization' = "token $ACCESS_TOKEN" } `
+                                        -ContentType 'application/json'
+
+
+
+After running the above code, the GitHub app should be installed on the specified repository. 
+Please make sure you have the necessary permissions and API access for the app installation to succeed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Add-Type -TypeDefinition @"
     using System;
     using System.Runtime.InteropServices;
