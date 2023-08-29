@@ -1,3 +1,56 @@
+Pour exécuter un script lors de l'ouverture de session Windows et lors de l'arrêt de l'ordinateur, vous devrez effectuer quelques étapes pour configurer ces actions. Cependant, notez que les systèmes Windows 10 et Windows 11 ont des mécanismes de sécurité en place qui peuvent nécessiter des privilèges élevés pour exécuter des scripts au niveau du système. Voici comment vous pourriez approcher cela en utilisant des scripts Go et en supposant que vous avez les autorisations nécessaires :
+
+1. **Script d'ouverture de session :**
+
+   Créez un script Go qui mettra à jour une valeur dans Consul lors de l'ouverture de session. Pour exécuter ce script au démarrage de Windows, vous pouvez ajouter un raccourci vers le script dans le dossier de démarrage. Voici un exemple minimal de code :
+
+   ```go
+   package main
+
+   import (
+       "fmt"
+       "log"
+       "os"
+       // Importez d'autres packages Go dont vous pourriez avoir besoin
+   )
+
+   func main() {
+       // Mettez à jour la valeur dans Consul ici
+       // Exemple : utiliser une bibliothèque Consul pour mettre à jour la valeur
+
+       // Exemple de sortie pour vérification
+       fmt.Println("Script d'ouverture de session exécuté avec succès.")
+       logFile, _ := os.OpenFile("session_log.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+       defer logFile.Close()
+       log.SetOutput(logFile)
+       log.Println("Script d'ouverture de session exécuté.")
+   }
+   ```
+
+2. **Script de fermeture de session :**
+
+   Pour exécuter un script avant l'arrêt ou la fermeture de session, vous pouvez utiliser une stratégie de groupe locale. Voici comment vous pourriez le faire :
+
+   - Appuyez sur `Win + R`, tapez `gpedit.msc` et appuyez sur Entrée.
+   - Accédez à `Configuration de l'ordinateur > Paramètres Windows > Scripts (démarrage/arrêt)`.
+   - Double-cliquez sur "Arrêt du système" et ajoutez le chemin du script Go que vous souhaitez exécuter.
+
+Assurez-vous de remplacer les parties pertinentes du code avec vos propres actions à exécuter.
+
+Il est important de noter que l'exécution de scripts au niveau du système peut nécessiter des privilèges élevés et peut être soumise aux restrictions de sécurité du système d'exploitation. Assurez-vous de comprendre les implications de sécurité et de tester soigneusement ces scripts avant de les déployer sur des systèmes de production.
+
+
+
+
+
+
+
+
+
+
+
+
+
 Bien sûr, je peux vous aider à configurer l'interface utilisateur (UI) de Consul de HashiCorp pour utiliser HTTPS en spécifiant les chemins vers les certificats SSL. Voici les étapes générales que vous devriez suivre pour réaliser cela :
 
 1. **Génération des certificats SSL** : Avant de configurer Consul pour utiliser HTTPS, vous devez disposer de certificats SSL valides pour votre domaine. Vous pouvez les générer à l'aide d'une autorité de certification (AC) publique ou d'outils comme OpenSSL.
