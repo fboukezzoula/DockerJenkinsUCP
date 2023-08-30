@@ -1,89 +1,21 @@
-Pour exécuter un script lors de l'ouverture de session Windows et lors de l'arrêt de l'ordinateur, vous devrez effectuer quelques étapes pour configurer ces actions. Cependant, notez que les systèmes Windows 10 et Windows 11 ont des mécanismes de sécurité en place qui peuvent nécessiter des privilèges élevés pour exécuter des scripts au niveau du système. Voici comment vous pourriez approcher cela en utilisant des scripts Go et en supposant que vous avez les autorisations nécessaires :
+Bien sûr, vous pouvez utiliser PowerShell pour accomplir cela. Voici comment vous pourriez faire pour extraire les noms des éléments "item" de votre fichier JSON et les stocker dans une variable :
 
-1. **Script d'ouverture de session :**
+```powershell
+$jsonContent = @"
+{
+	"item1": {},
+	"item2": {},
+	"item3": {
+		"data" : "value"
+	},
+	"item4": {}
+}
+"@
 
-   Créez un script Go qui mettra à jour une valeur dans Consul lors de l'ouverture de session. Pour exécuter ce script au démarrage de Windows, vous pouvez ajouter un raccourci vers le script dans le dossier de démarrage. Voici un exemple minimal de code :
+$jsonObject = ConvertFrom-Json $jsonContent
+$items = $jsonObject.PSObject.Properties.Name -match '^item\d+$'
+```
 
-   ```go
-   package main
+Dans cet exemple, nous stockons le contenu JSON dans la variable `$jsonContent`. Ensuite, nous utilisons `ConvertFrom-Json` pour convertir le JSON en un objet PowerShell. Ensuite, nous utilisons la propriété `PSObject.Properties.Name` pour obtenir les noms de toutes les propriétés de l'objet JSON et nous utilisons `-match '^item\d+$'` pour filtrer les noms qui correspondent au motif "item" suivi de chiffres.
 
-   import (
-       "fmt"
-       "log"
-       "os"
-       // Importez d'autres packages Go dont vous pourriez avoir besoin
-   )
-
-   func main() {
-       // Mettez à jour la valeur dans Consul ici
-       // Exemple : utiliser une bibliothèque Consul pour mettre à jour la valeur
-
-       // Exemple de sortie pour vérification
-       fmt.Println("Script d'ouverture de session exécuté avec succès.")
-       logFile, _ := os.OpenFile("session_log.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-       defer logFile.Close()
-       log.SetOutput(logFile)
-       log.Println("Script d'ouverture de session exécuté.")
-   }
-   ```
-
-2. **Script de fermeture de session :**
-
-   Pour exécuter un script avant l'arrêt ou la fermeture de session, vous pouvez utiliser une stratégie de groupe locale. Voici comment vous pourriez le faire :
-
-   - Appuyez sur `Win + R`, tapez `gpedit.msc` et appuyez sur Entrée.
-   - Accédez à `Configuration de l'ordinateur > Paramètres Windows > Scripts (démarrage/arrêt)`.
-   - Double-cliquez sur "Arrêt du système" et ajoutez le chemin du script Go que vous souhaitez exécuter.
-
-Assurez-vous de remplacer les parties pertinentes du code avec vos propres actions à exécuter.
-
-Il est important de noter que l'exécution de scripts au niveau du système peut nécessiter des privilèges élevés et peut être soumise aux restrictions de sécurité du système d'exploitation. Assurez-vous de comprendre les implications de sécurité et de tester soigneusement ces scripts avant de les déployer sur des systèmes de production.
-
-
-
-
-
-
-
-
-
-
-
-
-
-Bien sûr, je peux vous aider à configurer l'interface utilisateur (UI) de Consul de HashiCorp pour utiliser HTTPS en spécifiant les chemins vers les certificats SSL. Voici les étapes générales que vous devriez suivre pour réaliser cela :
-
-1. **Génération des certificats SSL** : Avant de configurer Consul pour utiliser HTTPS, vous devez disposer de certificats SSL valides pour votre domaine. Vous pouvez les générer à l'aide d'une autorité de certification (AC) publique ou d'outils comme OpenSSL.
-
-2. **Configuration Consul** :
-
-   a. Ouvrez votre fichier de configuration Consul (généralement `consul.hcl`).
-
-   b. Recherchez la section liée à l'interface utilisateur (UI) de Consul. Si elle n'existe pas, vous devrez l'ajouter. Voici un exemple de ce à quoi cela pourrait ressembler :
-
-   ```hcl
-   ui = true
-   ```
-
-   c. Ajoutez les paramètres de configuration SSL sous la section UI. Voici un exemple :
-
-   ```hcl
-   ui = true
-
-   addresses = {
-     http = "0.0.0.0"
-   }
-
-   tls_cert_file = "/chemin/vers/votre/certificat.crt"
-   tls_key_file  = "/chemin/vers/votre/cle_privee.key"
-   ```
-
-   Assurez-vous de remplacer `/chemin/vers/votre/certificat.crt` et `/chemin/vers/votre/cle_privee.key` par les chemins complets de vos fichiers de certificat SSL et de clé privée.
-
-3. **Redémarrez Consul** : Après avoir apporté ces modifications, enregistrez le fichier de configuration et redémarrez le service Consul pour appliquer les modifications. Assurez-vous que l'interface utilisateur est maintenant accessible via HTTPS en utilisant l'adresse appropriée (par exemple, `https://nom-de-domaine:8501`).
-
-4. **Configuration du pare-feu et du proxy inversé** : Si vous avez un pare-feu ou un proxy inversé devant votre instance Consul, assurez-vous de configurer les règles appropriées pour le trafic HTTPS (port 8501) afin de permettre aux utilisateurs d'accéder à l'interface utilisateur en toute sécurité.
-
-5. **Vérification et débogage** : Si des problèmes surviennent, consultez les journaux Consul pour identifier les erreurs potentielles. Assurez-vous également que vos certificats sont valides et bien configurés.
-
-Veuillez noter que les chemins des fichiers et les emplacements des paramètres peuvent varier en fonction de votre système d'exploitation et de votre méthode d'installation de Consul. Assurez-vous de consulter la documentation officielle de Consul pour obtenir des instructions spécifiques à votre environnement.
+Les noms correspondants sont stockés dans la variable `$items`, que vous pouvez utiliser comme vous le souhaitez dans votre script.
