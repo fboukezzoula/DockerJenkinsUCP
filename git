@@ -1,3 +1,20 @@
+$jsonContent = @"
+{
+	"item1": {},
+	"dsqds": {},
+	"sqdd": {
+		"data" : "value"
+	},
+	"itcxcxem4": {}
+}
+"@
+
+$jsonObject = ConvertFrom-Json $jsonContent
+$items = $jsonObject.Keys
+
+
+
+
 Bien sûr, vous pouvez utiliser PowerShell pour accomplir cela. Voici comment vous pourriez faire pour extraire les noms des éléments "item" de votre fichier JSON et les stocker dans une variable :
 
 ```powershell
