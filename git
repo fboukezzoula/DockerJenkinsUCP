@@ -1,24 +1,17 @@
-$json = '{
-	"dsqfsfdsf" : {},
-	"ABBsddsqfsqsdqsdfdsf" : {},
-	"dsqfsFFfdsf" : {},
-	"55dsqfsfxcxdsf" : {
-		"adresse": "sdfdsfdsf"
-	},
-	"663dsqfsfdsf" : {},
-	"AAdsqfxwxsfdsf" : {}
-}'
+# Paramètres
+$consulAddress = "http://localhost:8500"  # Remplacez par l'adresse de votre serveur Consul
+$token = "votre_token_consul"            # Remplacez par votre propre token Consul
+$key = "ma_clé"                          # La clé que vous voulez créer
+$value = "ma_valeur"                     # La valeur associée à la clé
 
-# Convertir la chaîne JSON en objet PowerShell
-$jsonObject = ConvertFrom-Json $json
+# Vérifier si la clé existe déjà
+$existingKey = Invoke-RestMethod -Uri "$consulAddress/v1/kv/$key" -Headers @{ "X-Consul-Token" = $token }
 
-# Créer un tableau pour stocker les premiers champs
-$users = @()
-
-# Parcourir les propriétés de l'objet JSON et ajouter les noms des champs au tableau
-foreach ($property in $jsonObject.PSObject.Properties) {
-    $users += $property.Name
+if ($existingKey -eq $null) {
+    # Créer la clé avec la valeur
+    $data = @{ Value = [Text.Encoding]::UTF8.GetBytes($value) }
+    Invoke-RestMethod -Uri "$consulAddress/v1/kv/$key" -Method Put -Headers @{ "X-Consul-Token" = $token } -Body (ConvertTo-Json $data)
+    Write-Host "Clé créée avec succès."
+} else {
+    Write-Host "La clé existe déjà."
 }
-
-# Afficher le tableau
-$users
