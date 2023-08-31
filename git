@@ -1,3 +1,24 @@
-$url = "https://mon.site/file.json"
-$jsonContent = Invoke-RestMethod -Uri $url
-$items = $jsonContent.Keys
+$json = '{
+	"dsqfsfdsf" : {},
+	"ABBsddsqfsqsdqsdfdsf" : {},
+	"dsqfsFFfdsf" : {},
+	"55dsqfsfxcxdsf" : {
+		"adresse": "sdfdsfdsf"
+	},
+	"663dsqfsfdsf" : {},
+	"AAdsqfxwxsfdsf" : {}
+}'
+
+# Convertir la chaîne JSON en objet PowerShell
+$jsonObject = ConvertFrom-Json $json
+
+# Créer un tableau pour stocker les premiers champs
+$users = @()
+
+# Parcourir les propriétés de l'objet JSON et ajouter les noms des champs au tableau
+foreach ($property in $jsonObject.PSObject.Properties) {
+    $users += $property.Name
+}
+
+# Afficher le tableau
+$users
