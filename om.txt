@@ -12,6 +12,58 @@ listen_port=4443
 # Parcourez chaque ligne de votre fichier de ConfigMap
 while read -r line; do
     name=$(echo $line | awk '{print $1}')
+    host="ssh.mydomain.com"  # Utilisez le même nom d'hôte pour tous les développeurs
+    path="/$name"  # Utilisez un chemin différent pour chaque développeur
+
+    # Créez un fichier YAML temporaire pour chaque règle d'Ingress
+    cat <<EOF >temp-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: $name-$ingress_name
+spec:
+  rules:
+  - host: $host
+    http:
+      paths:
+      - path: $path
+        pathType: Prefix
+        backend:
+          service:
+            name: ssh-service
+            port:
+              number: tcp$listen_port  # Utilisez la variable listen_port dynamique
+EOF
+
+    # Appliquez la règle d'Ingress
+    kubectl apply -f temp-ingress.yaml
+
+    # Supprimez le fichier YAML temporaire
+    rm temp-ingress.yaml
+
+    echo "Règle d'Ingress créée pour $name ($host$path) sur le port $listen_port."
+    
+    # Incrémentez le port pour la prochaine itération
+    listen_port=$((listen_port + 1))
+done < /path/to/server_info_file
+
+
+
+
+#!/bin/sh
+
+# Nom de votre Ingress
+ingress_name="ssh-ingress"
+
+# Supprimez l'Ingress existant s'il existe déjà
+kubectl delete ingress $ingress_name --ignore-not-found=true
+
+# Port initial pour TCP-LISTEN
+listen_port=4443
+
+# Parcourez chaque ligne de votre fichier de ConfigMap
+while read -r line; do
+    name=$(echo $line | awk '{print $1}')
     host=$(echo $line | awk '{print $2}')
 
     # Créez un fichier YAML temporaire pour chaque règle d'Ingress
