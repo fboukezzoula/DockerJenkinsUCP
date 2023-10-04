@@ -1,3 +1,75 @@
+Bien sûr, pour générer automatiquement le fichier de déploiement (deployment.yaml) basé sur la ConfigMap et les ports de conteneur (4443, 4444, etc.), vous pouvez utiliser un script similaire. Voici comment vous pouvez l'adapter :
+
+bash
+Copy code
+#!/bin/sh
+
+# Nom du déploiement
+deployment_name="ssh-deployment"
+
+# Supprimez le déploiement existant s'il existe déjà
+kubectl delete deployment $deployment_name --ignore-not-found=true
+
+# Port initial pour TCP-LISTEN
+listen_port=4443
+
+# Chemin du fichier de configuration
+config_file="/path/to/server_info_file"
+
+# Fichier de sortie pour la configuration du déploiement
+output_file="deployment.yaml"
+
+# Supprimez le fichier de sortie s'il existe déjà
+rm -f $output_file
+
+# Début du fichier de déploiement
+cat <<EOF >$output_file
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $deployment_name
+spec:
+  replicas: 1  # Vous pouvez ajuster le nombre de réplicas selon vos besoins
+  selector:
+    matchLabels:
+      app: socat  # Étiquette utilisée pour sélectionner les conteneurs socat
+  template:
+    metadata:
+      labels:
+        app: socat  # Étiquette utilisée pour sélectionner les conteneurs socat
+    spec:
+      containers:
+EOF
+
+# Parcourez chaque ligne de votre fichier de ConfigMap
+while read -r line; do
+    name=$(echo $line | awk '{print $1}')
+
+    # Ajoutez la configuration du conteneur au fichier de sortie
+    cat <<EOF >>$output_file
+      - name: $name-container
+        image: your-socat-image  # Spécifiez l'image du conteneur socat
+        ports:
+        - containerPort: $listen_port
+EOF
+
+    echo "Configuration de conteneur créée pour $name sur le port $listen_port."
+
+    # Incrémentez le port pour la prochaine itération
+    listen_port=$((listen_port + 1))
+done < $config_file
+
+# Fin du fichier de déploiement
+echo "Fichier de déploiement généré avec succès : $output_file"
+Ce script génère la configuration du déploiement Kubernetes en fonction des données de la ConfigMap et des ports de conteneur (4443, 4444, etc.). Le résultat est écrit dans un fichier de déploiement YAML appelé deployment.yaml.
+
+Après avoir exécuté ce script, vous obtiendrez un fichier de déploiement YAML prêt à être appliqué sur votre cluster Kubernetes. Assurez-vous de personnaliser les chemins des fichiers d'entrée/sortie, l'image du conteneur, le nombre de réplicas et d'autres valeurs en fonction de votre configuration spécifique.
+
+Ainsi, vous pouvez générer automatiquement la configuration du service, les règles d'Ingress et la configuration du déploiement à partir de votre fichier de configuration.
+
+
+
+
 Je comprends que vous souhaitiez générer automatiquement le fichier de règles Ingress en fonction du contenu de votre fichier de configuration. Voici comment vous pouvez générer automatiquement le fichier Ingress YAML à partir de votre fichier de configuration (ConfigMap) en utilisant un script :
 
 bash
