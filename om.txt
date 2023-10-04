@@ -1,3 +1,54 @@
+#!/bin/sh
+
+# Nom de votre Ingress
+ingress_name="ssh-ingress"
+
+# Supprimez l'Ingress existant s'il existe déjà
+kubectl delete ingress $ingress_name --ignore-not-found=true
+
+# Port initial pour TCP-LISTEN
+listen_port=4443
+
+# Parcourez chaque ligne de votre fichier de ConfigMap
+while read -r line; do
+    name=$(echo $line | awk '{print $1}')
+    host=$(echo $line | awk '{print $2}')
+
+    # Créez un fichier YAML temporaire pour chaque règle d'Ingress
+    cat <<EOF >temp-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: $name-$ingress_name
+spec:
+  rules:
+  - host: $host
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ssh-service
+            port:
+              number: tcp$listen_port  # Utilisez la variable listen_port dynamique
+EOF
+
+    # Appliquez la règle d'Ingress
+    kubectl apply -f temp-ingress.yaml
+
+    # Supprimez le fichier YAML temporaire
+    rm temp-ingress.yaml
+
+    echo "Règle d'Ingress créée pour $name ($host) sur le port $listen_port."
+    
+    # Incrémentez le port pour la prochaine itération
+    listen_port=$((listen_port + 1))
+done < /path/to/server_info_file
+
+
+
+
 Si vous avez plusieurs serveurs distants vers lesquels vous souhaitez rediriger le trafic SSH à partir du conteneur Docker, vous devrez créer une configuration dynamique pour rediriger le trafic vers le serveur distant approprié en fonction de l'hôte auquel chaque développeur essaie de se connecter. Voici comment vous pourriez le faire :
 
 Modifiez le Dockerfile pour inclure un script d'initialisation qui déterminera dynamiquement le serveur distant en fonction de l'hôte demandé.
