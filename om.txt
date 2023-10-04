@@ -521,6 +521,56 @@ peut on construite l'infgress rule autamtiquement ?
 mettre à jour le yaml ?
 
 
+Compris, si vous n'avez pas accès à Kustomize, vous pouvez toujours utiliser des scripts pour générer automatiquement les règles d'Ingress à partir de votre ConfigMap. Voici un exemple de script Shell qui pourrait vous aider à accomplir cela :
+
+bash
+Copy code
+#!/bin/sh
+
+# Nom de votre Ingress
+ingress_name="ssh-ingress"
+
+# Supprimez l'Ingress existant s'il existe déjà
+kubectl delete ingress $ingress_name --ignore-not-found=true
+
+# Parcourez chaque ligne de votre fichier de ConfigMap
+while read -r line; do
+    name=$(echo $line | awk '{print $1}')
+    host=$(echo $line | awk '{print $2}')
+
+    # Créez un fichier YAML temporaire pour chaque règle d'Ingress
+    cat <<EOF >temp-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: $name-$ingress_name
+spec:
+  rules:
+  - host: $host
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ssh-service
+            port:
+              number: tcp4443
+EOF
+
+    # Appliquez la règle d'Ingress
+    kubectl apply -f temp-ingress.yaml
+
+    # Supprimez le fichier YAML temporaire
+    rm temp-ingress.yaml
+
+    echo "Règle d'Ingress créée pour $name ($host)."
+done < /path/to/server_info_file
+Ce script Shell parcourt chaque ligne de votre fichier de ConfigMap, extrait le nom et l'hôte, crée un fichier YAML temporaire pour chaque règle d'Ingress, puis l'applique à votre cluster Kubernetes à l'aide de kubectl apply. Assurez-vous de personnaliser les valeurs comme le nom de l'Ingress, le nom du service SSH, le numéro de port, etc., en fonction de votre configuration spécifique.
+
+Exécutez ce script chaque fois que vous mettez à jour votre ConfigMap, et il générera automatiquement les règles d'Ingress en fonction des données de la ConfigMap.
+
+
 
 
 
