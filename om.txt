@@ -388,6 +388,139 @@ Avec ces étapes, vous devriez être en mesure d'exposer un service Kubernetes v
 
 
 
+Compris, si vous n'avez pas accès à Kustomize, vous pouvez toujours utiliser des scripts pour générer automatiquement les règles d'Ingress à partir de votre ConfigMap. Voici un exemple de script Shell qui pourrait vous aider à accomplir cela :
+
+bash
+Copy code
+#!/bin/sh
+
+# Nom de votre Ingress
+ingress_name="ssh-ingress"
+
+# Supprimez l'Ingress existant s'il existe déjà
+kubectl delete ingress $ingress_name --ignore-not-found=true
+
+# Parcourez chaque ligne de votre fichier de ConfigMap
+while read -r line; do
+    name=$(echo $line | awk '{print $1}')
+    host=$(echo $line | awk '{print $2}')
+
+    # Créez un fichier YAML temporaire pour chaque règle d'Ingress
+    cat <<EOF >temp-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: $name-$ingress_name
+spec:
+  rules:
+  - host: $host
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ssh-service
+            port:
+              number: tcp4443
+EOF
+
+    # Appliquez la règle d'Ingress
+    kubectl apply -f temp-ingress.yaml
+
+    # Supprimez le fichier YAML temporaire
+    rm temp-ingress.yaml
+
+    echo "Règle d'Ingress créée pour $name ($host)."
+done < /path/to/server_info_file
+Ce script Shell parcourt chaque ligne de votre fichier de ConfigMap, extrait le nom et l'hôte, crée un fichier YAML temporaire pour chaque règle d'Ingress, puis l'applique à votre cluster Kubernetes à l'aide de kubectl apply. Assurez-vous de personnaliser les valeurs comme le nom de l'Ingress, le nom du service SSH, le numéro de port, etc., en fonction de votre configuration spécifique.
+
+Exécutez ce script chaque fois que vous mettez à jour votre ConfigMap, et il générera automatiquement les règles d'Ingress en fonction des données de la ConfigMap.
+
+
+
+
+
+
+
+
+
+
+
+
+Pour incrémenter dynamiquement le port TCP-LISTEN dans la boucle tout en itérant sur les lignes de votre fichier server_info_file, vous pouvez utiliser une variable pour stocker le port et l'incrémenter à chaque itération. Voici comment vous pouvez le faire :
+
+bash
+Copy code
+#!/bin/sh
+
+# Port initial pour TCP-LISTEN
+listen_port=4443
+
+# Lire les informations sur les serveurs distants depuis le volume
+while read -r line; do
+    name=$(echo $line | awk '{print $1}')
+    remote_server=$(echo $line | awk '{print $2}')
+
+    # Créer la commande socat pour ce serveur distant en utilisant le port actuel
+    socat_cmd="socat TCP-LISTEN:$listen_port,fork,reuseaddr TCP:$remote_server:22 &"
+
+    # Exécutez la commande socat en arrière-plan
+    eval $socat_cmd
+
+    echo "Tunnel SSH vers $name ($remote_server) est actif sur le port $listen_port."
+
+    # Incrémentez le port pour la prochaine itération
+    listen_port=$((listen_port + 1))
+done < /path/to/server_info_file
+
+# Laissez le conteneur en cours d'exécution pour maintenir les tunnels actifs
+tail -f /dev/null
+Dans ce script, nous utilisons la variable listen_port pour stocker le port TCP-LISTEN, et à chaque itération, nous l'incrémentons de 1. Ainsi, à chaque itération de la boucle, le port TCP-LISTEN sera différent, commençant par 4443 et augmentant de 1 à chaque étape. Cela permet de créer des tunnels SSH sur des ports TCP-LISTEN différents pour chaque serveur distant.
+
+
+
+Dans cet exemple, nous avons configuré des règles d'Ingress pour différents chemins (/dev1, /dev2, etc.). Chaque chemin correspond à un développeur spécifique. L'Ingress Controller redirigera le trafic en fonction du chemin vers le service Kubernetes ssh-service.
+
+Avec cette approche, les développeurs peuvent utiliser un seul nom de domaine (ou adresse IP) pour se connecter, et ils spécifient le chemin correspondant dans leur URL SSH (par exemple, ssh mydomain.com/dev1 ou ssh mydomain.com/dev2) pour se connecter au conteneur socat approprié. Cela réduit la nécessité de créer un service et une règle d'Ingress distincts pour chaque développeur, ce qui peut devenir fastidieux à grande échelle.
+
+
+
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ssh-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /dev1  # Chemin pour le premier développeur
+        pathType: Prefix
+        backend:
+          service:
+            name: ssh-service
+            port:
+              number: tcp4443
+      - path: /dev2  # Chemin pour le deuxième développeur
+        pathType: Prefix
+        backend:
+          service:
+            name: ssh-service
+            port:
+              number: tcp4443
+
+
+on s'appuyant sur le fichier (configmap)
+
+myvm1 host1
+myvm2 host2
+etc...
+
+peut on construite l'infgress rule autamtiquement ?
+mettre à jour le yaml ?
+
+
 
 
 
