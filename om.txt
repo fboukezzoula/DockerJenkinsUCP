@@ -328,3 +328,67 @@ GatewayPorts yes
 Assurez-vous d'ajuster ces configurations en fonction de vos besoins spécifiques. Une fois la configuration mise à jour, redémarrez le service SSH pour que les modifications prennent effet.
 
 Veuillez noter que pour activer la redirection de port, vous devrez également vous assurer que le serveur OpenSSH est configuré pour permettre la redirection de port. En fonction de votre configuration réseau et de sécurité, vous devrez peut-être prendre en compte les règles de pare-feu et d'accès pour garantir que la redirection de port fonctionne correctement.
+
+e m'excuse pour la confusion. Si vous souhaitez exposer un service Kubernetes en utilisant une connexion TCP avec Nginx Ingress Controller, vous pouvez utiliser une configuration spécifique pour cela.
+
+Voici comment vous pouvez configurer Nginx Ingress Controller pour gérer les connexions TCP sans HTTP :
+
+Assurez-vous que Nginx Ingress Controller est installé :
+
+Assurez-vous que Nginx Ingress Controller est installé et fonctionne correctement dans votre cluster Kubernetes.
+Créez une ressource ConfigMap :
+
+Créez une ConfigMap spécifiant les règles de serveur pour les connexions TCP. Par exemple, créez un fichier tcp-configmap.yaml avec le contenu suivant :
+yaml
+Copy code
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tcp-configmap
+data:
+  22: "default/my-service:22"
+Dans cet exemple, nous indiquons à Nginx Ingress Controller de rediriger les connexions entrantes sur le port 22 (SSH) vers le service Kubernetes nommé my-service sur le port 22.
+
+Déployez la ConfigMap :
+
+Appliquez la ConfigMap en utilisant kubectl apply -f tcp-configmap.yaml.
+Créez une ressource Ingress :
+
+Créez une ressource Ingress personnalisée pour gérer la redirection du trafic TCP. Voici un exemple de fichier YAML pour une telle ressource :
+yaml
+Copy code
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tcp-ingress
+spec:
+  rules:
+  - host: tcp-hostname.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tcp-configmap
+            port:
+              name: "22"
+Dans cet exemple, nous utilisons networking.k8s.io/v1 pour créer une ressource Ingress personnalisée. Vous pouvez personnaliser le nom (tcp-ingress), le host (tcp-hostname.com), et le port (name: "22") en fonction de vos besoins.
+
+Déployez votre Ingress :
+
+Appliquez la configuration de l'Ingress en utilisant kubectl apply -f nom-du-fichier.yaml.
+Vérifiez votre configuration :
+
+Assurez-vous que l'Ingress Controller a bien pris en compte votre configuration en vérifiant les logs du pod de l'Ingress Controller ou en utilisant des outils de diagnostic.
+Testez la connexion TCP :
+
+Vous pouvez maintenant tester la connexion TCP en utilisant un client TCP approprié (par exemple, telnet ou nc) pour vous connecter à tcp-hostname.com sur le port spécifié (dans cet exemple, le port 22) et vérifier que la redirection fonctionne comme prévu.
+Avec ces étapes, vous devriez être en mesure d'exposer un service Kubernetes via une connexion TCP sans HTTP en utilisant Nginx Ingress Controller. Assurez-vous d'adapter la configuration à vos besoins spécifiques.
+
+
+
+
+
+
+
