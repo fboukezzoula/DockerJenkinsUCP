@@ -2,14 +2,15 @@
 
 consul_url="https://monconsul.intra"
 consul_prefix="devs"
+consul_token="votre_token"  # Remplacez par votre token Consul
 
 # Récupérer la liste des clés sous le préfixe
-keys=$(curl -s "$consul_url/v1/kv/$consul_prefix?keys")
+keys=$(curl -s -H "Authorization: Bearer $consul_token" "$consul_url/v1/kv/$consul_prefix?keys")
 
 # Parcourir les clés
 for key in $keys; do
   # Récupérer les données JSON associées à la clé
-  data=$(curl -s "$consul_url/v1/kv$key")
+  data=$(curl -s -H "Authorization: Bearer $consul_token" "$consul_url/v1/kv$key")
   
   # Extraire les valeurs des clés "ssh_port_socat" et "dev_hostname" (à adapter selon votre structure JSON)
   listen_port=$(echo "$data" | jq -r '.[0].Value' | base64 -d | jq -r '.ssh_port_socat')
