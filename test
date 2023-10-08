@@ -12,17 +12,19 @@ for key in $keys; do
   # Récupérer les données JSON associées à la clé
   data=$(curl -s -H "Authorization: Bearer $consul_token" "$consul_url/v1/kv$key")
   
-  # Extraire les valeurs des clés "ssh_port_socat" et "dev_hostname" (à adapter selon votre structure JSON)
-  listen_port=$(echo "$data" | jq -r '.[0].Value' | base64 -d | jq -r '.ssh_port_socat')
-  remote_server=$(echo "$data" | jq -r '.[0].Value' | base64 -d | jq -r '.dev_hostname')
+  # Extraire le nom du développeur de la clé (par exemple, dev1hostname)
+  dev_hostname=$(basename $key)
   
-  if [[ -n "$listen_port" && -n "$remote_server" ]]; then
+  # Extraire le port SSH proxy du JSON
+  ssh_proxy_port=$(echo "$data" | jq -r '.[0].Value' | base64 -d | jq -r '.ssh_proxy_port')
+  
+  if [[ -n "$ssh_proxy_port" && -n "$dev_hostname" ]]; then
     # Construire la commande socat
-    socat_cmd="socat TCP-LISTEN:$listen_port,fork,reuseaddr TCP:$remote_server:22"
+    socat_cmd="socat TCP-LISTEN:$ssh_proxy_port,fork,reuseaddr TCP:$dev_hostname:22"
     
     # Exécuter la commande socat en arrière-plan
     $socat_cmd &
     
-    echo "Commande socat exécutée pour le port $listen_port vers $remote_server"
+    echo "Commande socat exécutée pour le port $ssh_proxy_port vers $dev_hostname"
   fi
 done
