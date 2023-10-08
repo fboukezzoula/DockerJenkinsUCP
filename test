@@ -1,104 +1,27 @@
-https://github.com/hd9/aspnet-docker
+#!/bin/bash
 
+consul_url="https://monconsul.intra"
+consul_prefix="devs"
 
+# Récupérer la liste des clés sous le préfixe
+keys=$(curl -s "$consul_url/v1/kv/$consul_prefix?keys")
 
-Je comprends mieux votre situation maintenant. Si vous avez un service Kubernetes avec plusieurs ports en backend et que vous ne pouvez créer qu'un seul NodePort, vous pouvez toujours rediriger le trafic de ce NodePort vers le service en utilisant un outil tel que socat ou iptables. Voici comment vous pouvez le faire :
-
-Créez un service de type ClusterIP pour votre application qui expose tous les ports nécessaires. Par exemple :
-yaml
-Copy code
-apiVersion: v1
-kind: Service
-metadata:
-  name: mon-service
-spec:
-  selector:
-    app: mon-app
-  ports:
-    - name: port1
-      port: 8080  # Port de votre choix
-      targetPort: 8080  # Port du backend de l'application
-    - name: port2
-      port: 8081  # Port de votre choix
-      targetPort: 8081  # Port du backend de l'application
-    # Ajoutez d'autres ports si nécessaire
-Créez un service de type NodePort avec un seul port NodePort. Par exemple :
-yaml
-Copy code
-apiVersion: v1
-kind: Service
-metadata:
-  name: mon-service-nodeport
-spec:
-  type: NodePort
-  selector:
-    app: mon-app
-  ports:
-    - name: nodeport
-      port: 30000  # Port NodePort unique
-      targetPort: 8080  # Port du backend que vous souhaitez exposer
-Exécutez socat ou utilisez iptables pour rediriger le trafic du NodePort vers le service de ClusterIP en fonction du port demandé. Par exemple, si vous utilisez socat, vous pouvez créer une redirection de port pour chaque port nécessaire :
-shell
-Copy code
-# Redirection du trafic du port NodePort vers le service de ClusterIP
-socat TCP-LISTEN:30000,fork,reuseaddr TCP:mon-service.default.svc.cluster.local:8080
-Répétez cette étape pour chaque port que vous souhaitez exposer. Par exemple, pour le port 8081 :
-shell
-Copy code
-# Redirection du trafic du port NodePort vers le service de ClusterIP
-socat TCP-LISTEN:30001,fork,reuseaddr TCP:mon-service.default.svc.cluster.local:8081
-Cela vous permettra d'exposer plusieurs ports de votre service Kubernetes en utilisant un seul NodePort, avec des redirections appropriées pour chaque port vers le service de ClusterIP correspondant. N'oubliez pas de personnaliser les noms de service (mon-service) et les ports en fonction de votre configuration spécifique.
-
-
-
-
-User
-mais là vous avez 2 ips nodeport
-ChatGPT
-Je m'excuse pour la confusion. En effet, dans les exemples précédents, chaque redirection de port utilisait un NodePort distinct, ce qui signifie que vous aviez besoin de plusieurs NodePorts, ce qui n'est pas ce que vous cherchiez.
-
-Si vous devez rediriger le trafic d'un seul NodePort vers plusieurs ports en backend d'un service, vous pouvez utiliser un outil tel que socat pour faire cette redirection. Voici comment vous pouvez le faire :
-
-Créez un service de type NodePort avec un seul port NodePort. Par exemple :
-yaml
-Copy code
-apiVersion: v1
-kind: Service
-metadata:
-  name: mon-service-nodeport
-spec:
-  type: NodePort
-  selector:
-    app: mon-app
-  ports:
-    - name: nodeport
-      port: 30000  # Port NodePort unique
-      targetPort: 8080  # Port du backend du service (le premier port)
-Créez un conteneur socat dans votre cluster Kubernetes pour rediriger le trafic de ce NodePort vers les ports en backend appropriés. Par exemple, vous pouvez créer un fichier de déploiement pour socat :
-yaml
-Copy code
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: socat-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: socat
-  template:
-    metadata:
-      labels:
-        app: socat
-    spec:
-      containers:
-      - name: socat
-        image: alpine/socat
-        args:
-          - "TCP-LISTEN:8080,fork,reuseaddr"
-          - "TCP:mon-service:8080"  # Rediriger vers le port du backend
-      # Ajoutez d'autres conteneurs ou ports de redirection au besoin
-Dans cet exemple, socat écoute sur le port 8080 et redirige le trafic vers le port 8080 du service mon-service. Vous pouvez ajouter d'autres conteneurs socat dans ce déploiement pour rediriger le trafic vers d'autres ports en backend, si nécessaire.
-
-Appliquez le déploiement socat-deployment dans votre cluster Kubernetes.
-Avec cette configuration, vous avez un seul NodePort (port 30000) exposé, et socat gère la redirection du trafic vers les ports en backend appropriés en fonction de la configuration de votre conteneur socat. Vous pouvez ajouter autant de conteneurs socat que nécessaire pour rediriger vers différents ports en backend.
+# Parcourir les clés
+for key in $keys; do
+  # Récupérer les données JSON associées à la clé
+  data=$(curl -s "$consul_url/v1/kv$key")
+  
+  # Extraire les valeurs des clés "ssh_port_socat" et "dev_hostname" (à adapter selon votre structure JSON)
+  listen_port=$(echo "$data" | jq -r '.[0].Value' | base64 -d | jq -r '.ssh_port_socat')
+  remote_server=$(echo "$data" | jq -r '.[0].Value' | base64 -d | jq -r '.dev_hostname')
+  
+  if [[ -n "$listen_port" && -n "$remote_server" ]]; then
+    # Construire la commande socat
+    socat_cmd="socat TCP-LISTEN:$listen_port,fork,reuseaddr TCP:$remote_server:22"
+    
+    # Exécuter la commande socat en arrière-plan
+    $socat_cmd &
+    
+    echo "Commande socat exécutée pour le port $listen_port vers $remote_server"
+  fi
+done
