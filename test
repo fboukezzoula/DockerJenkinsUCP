@@ -5,6 +5,31 @@ https://www.redhat.com/sysadmin/session-recording-tlog
 
 
 
+
+
+#!/bin/bash
+
+# Activer le port 2222 pour SSH
+firewall-cmd --permanent --add-port=2222/tcp
+firewall-cmd --reload
+
+# Bloquer la communication sortante par défaut
+iptables -P OUTPUT DROP
+Modifiez votre Dockerfile pour copier ce script et le script de démarrage dans le conteneur :
+Dockerfile
+Copy code
+# Copier le script de configuration du pare-feu
+COPY firewall-setup.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/firewall-setup.sh
+
+# Exposer le port 2222
+EXPOSE 2222
+
+# Exécutez le script de configuration du pare-feu lors du démarrage du conteneur
+CMD /usr/local/bin/firewall-setup.sh && /usr/sbin/sshd -D
+
+
+
 Créez un fichier iptables-rules.sh avec les règles iptables dont vous avez besoin. Par exemple :
 bash
 Copy code
