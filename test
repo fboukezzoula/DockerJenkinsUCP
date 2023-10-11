@@ -2,6 +2,35 @@ https://www.redhat.com/sysadmin/secure-session-recording
 https://www.redhat.com/sysadmin/session-recording-tlog
 
 
+
+
+# ...
+
+# Activer le port 2222 pour SSH dans le fichier de configuration SSH
+RUN sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
+
+# Installer iptables (si ce n'est pas déjà fait)
+RUN dnf install -y iptables
+
+# Créer une règle pour permettre la communication sortante vers le CIDR spécifié sur le port 2222
+RUN iptables -A OUTPUT -p tcp --dport 2222 -d 192.167.0.0/21 -j ACCEPT
+
+# Bloquer la communication sortante par défaut
+RUN iptables -P OUTPUT DROP
+
+# Exposer le port 2222
+EXPOSE 2222
+
+# Démarrer le service SSH
+CMD ["/usr/sbin/sshd", "-D"]
+
+
+
+
+
+
+
+
 # Désactiver l'authentification par mot de passe
 RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
 
