@@ -2,6 +2,10 @@ https://www.redhat.com/sysadmin/secure-session-recording
 https://www.redhat.com/sysadmin/session-recording-tlog
 
 
+# Désactiver l'authentification par mot de passe
+RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
+
+
 
 
 # Utiliser l'image Red Hat Universal Base Image (UBI) 8
