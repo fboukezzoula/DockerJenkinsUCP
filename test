@@ -1,2 +1,52 @@
 https://www.redhat.com/sysadmin/secure-session-recording
 https://www.redhat.com/sysadmin/session-recording-tlog
+
+
+Pour créer un conteneur Docker basé sur Red Hat 8, avec un serveur SSH configuré pour un bastion SSH et un firewall activé pour des règles de sortie spécifiques, vous pouvez utiliser un Dockerfile. Voici un exemple de Dockerfile pour cela :
+
+Dockerfile
+Copy code
+# Utiliser l'image Red Hat Universal Base Image (UBI) 8
+FROM registry.access.redhat.com/ubi8/ubi
+
+# Installer le serveur SSH
+RUN dnf install -y openssh-server
+
+# Créer un utilisateur non privilégié pour SSH
+RUN useradd -m -d /home/sshuser sshuser
+
+# Copier la clé publique dans le conteneur
+COPY authorized_keys /home/sshuser/.ssh/authorized_keys
+
+# Définir le mot de passe de l'utilisateur à null pour désactiver l'authentification par mot de passe
+RUN echo "sshuser:password" | chpasswd -e
+
+# Activer le port 2222 pour SSH dans le fichier de configuration SSH
+RUN sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
+
+# Activer le firewall pour sortir uniquement vers le CIDR spécifié (255.255.248.0/21) sur le port 2222
+RUN firewall-cmd --zone=public --add-rich-rule 'rule family="ipv4" source address="255.255.248.0/21" port port="2222" protocol="tcp" accept'
+
+# Exposer le port 2222
+EXPOSE 2222
+
+# Démarrer le service SSH
+CMD ["/usr/sbin/sshd", "-D"]
+Assurez-vous d'avoir un fichier authorized_keys dans le même répertoire que votre Dockerfile, qui contient la clé publique que vous souhaitez autoriser pour les connexions SSH. Le Dockerfile installe un serveur SSH, crée un utilisateur non privilégié, désactive l'authentification par mot de passe, active le port 2222 pour SSH, configure le firewall pour autoriser les connexions sortantes uniquement vers le CIDR spécifié sur le port 2222, expose le port 2222, et démarre le service SSH.
+
+Pour construire le conteneur, utilisez la commande docker build :
+
+Copy code
+docker build -t mon-bastion-ssh .
+Ensuite, pour exécuter le conteneur, utilisez la commande docker run :
+
+arduino
+Copy code
+docker run -d -p 2222:2222 mon-bastion-ssh
+Le conteneur sera en cours d'exécution avec le serveur SSH configuré pour agir comme un bastion SSH, permettant aux connexions SSH autorisées via la clé publique de se connecter au port 2222.
+
+Assurez-vous d'adapter le Dockerfile et les règles du firewall selon vos besoins spécifiques en matière de sécurité et d'accès.
+
+
+
+
