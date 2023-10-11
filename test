@@ -2,6 +2,45 @@ https://www.redhat.com/sysadmin/secure-session-recording
 https://www.redhat.com/sysadmin/session-recording-tlog
 
 
+
+
+# Utiliser l'image Red Hat Universal Base Image (UBI) 8
+FROM registry.access.redhat.com/ubi8/ubi
+
+# Installer le serveur SSH
+RUN dnf install -y openssh-server
+
+# Créer un utilisateur non privilégié pour SSH
+RUN useradd -m -d /home/sshuser sshuser
+
+# Générer les clés SSH pendant la construction du conteneur
+RUN ssh-keygen -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N ""
+
+# Copier la clé publique dans le répertoire de l'utilisateur
+COPY authorized_keys /home/sshuser/.ssh/authorized_keys
+
+# Activer le port 2222 pour SSH dans le fichier de configuration SSH
+RUN sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
+
+# Activer le firewall pour sortir uniquement vers le CIDR spécifié (255.255.248.0/21) sur le port 2222
+RUN firewall-cmd --zone=public --add-rich-rule 'rule family="ipv4" source address="255.255.248.0/21" port port="2222" protocol="tcp" accept'
+
+# Exposer le port 2222
+EXPOSE 2222
+
+# Démarrer le service SSH
+CMD ["/usr/sbin/sshd", "-D"]
+
+
+
+
+
+
+
+
+
+
+
 Pour créer un conteneur Docker basé sur Red Hat 8, avec un serveur SSH configuré pour un bastion SSH et un firewall activé pour des règles de sortie spécifiques, vous pouvez utiliser un Dockerfile. Voici un exemple de Dockerfile pour cela :
 
 Dockerfile
