@@ -4,6 +4,42 @@ https://www.redhat.com/sysadmin/session-recording-tlog
 
 
 
+
+Créez un fichier iptables-rules.sh avec les règles iptables dont vous avez besoin. Par exemple :
+bash
+Copy code
+#!/bin/bash
+
+# Effacer toutes les règles existantes
+iptables -F
+
+# Autoriser la communication sortante vers le CIDR spécifié sur le port 2222
+iptables -A OUTPUT -p tcp --dport 2222 -d 192.167.0.0/21 -j ACCEPT
+
+# Bloquer la communication sortante par défaut
+iptables -P OUTPUT DROP
+Dans votre Dockerfile, copiez le fichier iptables-rules.sh dans le conteneur et exécutez-le pour appliquer les règles iptables. Voici comment vous pouvez ajuster votre Dockerfile :
+Dockerfile
+Copy code
+# ...
+
+# Copier les règles iptables dans le conteneur
+COPY iptables-rules.sh /iptables-rules.sh
+
+# Exécutez le script pour appliquer les règles iptables
+RUN chmod +x /iptables-rules.sh && /iptables-rules.sh
+
+# ...
+Avec cette approche, vous n'avez pas besoin de sudo, car vous exécutez les règles dans le même contexte du conteneur. Assurez-vous de personnaliser les règles iptables en fonction de vos besoins spécifiques. Après avoir apporté ces modifications, reconstruisez votre image Docker.
+
+
+
+
+
+
+
+
+
 # ...
 
 # Activer le port 2222 pour SSH dans le fichier de configuration SSH
