@@ -1,3 +1,25 @@
+Si vous souhaitez configurer SSH pour qu'il se connecte directement à server1 lorsqu'il est disponible et, en cas d'échec, utilise un jumphost (server2) comme alternative, vous pouvez configurer une option Match dans votre fichier ~/.ssh/config. Voici comment vous pouvez le faire :
+
+ssh
+Copy code
+Host server1
+    HostName server1.example.com
+    User your_username
+    Port 22
+
+Host server2
+    HostName server2.example.com
+    User your_username
+    Port 22
+
+Match Host server1 Host server2 exec "ssh -q -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=no %r@%h echo 2>&1" && ProxyJump=server1 || ProxyJump=server2
+Dans cette configuration, SSH tentera d'abord de se connecter à server1. Si la connexion à server1 échoue, il passera automatiquement à server2, qui est configuré comme jumphost.
+
+Assurez-vous de remplacer server1.example.com et server2.example.com par les adresses de vos serveurs et your_username par votre nom d'utilisateur.
+
+Cela permet de se connecter directement à server1 lorsque possible, tout en basculant automatiquement vers server2 (jumphost) en cas d'échec de la connexion.
+
+
 
 
 Ajoutez une entrée pour server1 et server2, en spécifiant le nom d'utilisateur, le port et le ProxyJump comme suit :
