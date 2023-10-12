@@ -1,3 +1,17 @@
+Host server1
+    HostName server1.example.com
+    User your_username
+    Port 22
+
+Host server2
+    HostName server2.example.com
+    User your_username
+    Port 22
+
+Match Host server1 Host server2 exec "ssh -q -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=no %r@%h echo 2>&1" && ProxyJump=server1 || ProxyJump=server2
+
+
+
 Host server2 server1
     User your_username
     Port 22  # Port SSH standard du serveur distant
