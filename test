@@ -1,3 +1,23 @@
+
+
+Ajoutez une entrée pour server1 et server2, en spécifiant le nom d'utilisateur, le port et le ProxyJump comme suit :
+
+
+Host server1
+    HostName server1.example.com
+    User your_username
+    Port 22
+    ProxyJump server2
+
+Host server2
+    HostName server2.example.com
+    User your_username
+    Port 22
+
+Avec cette configuration, lorsque vous exécutez ssh server1, SSH tentera de se connecter à server1 en passant par server2. Si la connexion à server1 échoue, SSH basculera automatiquement vers server2. Cela vous permet d'effectuer un basculement automatique entre les serveurs en cas d'échec de connexion.
+
+
+
 Host server2 server1
     User your_username
     Port 22  # Port SSH standard du serveur distant
