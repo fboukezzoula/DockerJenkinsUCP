@@ -1,3 +1,13 @@
+Host server2 server1
+    User your_username
+    Port 22  # Port SSH standard du serveur distant
+
+    # Essayer d'abord server2, puis server1 en cas d'échec
+    ProxyCommand ssh -q -W %h:%p server2 || ssh -q -W %h:%p server1
+
+
+
+
 Si vous souhaitez configurer SSH pour qu'il se connecte directement à server1 lorsqu'il est disponible et, en cas d'échec, utilise un jumphost (server2) comme alternative, vous pouvez configurer une option Match dans votre fichier ~/.ssh/config. Voici comment vous pouvez le faire :
 
 ssh
