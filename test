@@ -1,3 +1,68 @@
+Si vous souhaitez utiliser une authentification PAM sans clé SSH ni mot de passe pour un compte sshproxy, vous devez effectuer quelques étapes de configuration spécifiques. Voici comment faire :
+
+Configurer PAM pour l'authentification SSH : La configuration PAM pour SSH est gérée par le fichier /etc/pam.d/sshd. Assurez-vous que le fichier contient les règles PAM nécessaires pour l'authentification sshproxy. Voici un exemple de configuration :
+
+swift
+Copy code
+auth    required    pam_unix.so
+account required    pam_unix.so
+Vous pouvez personnaliser ces règles en fonction de vos besoins spécifiques.
+
+Configurer SSH pour l'authentification : Assurez-vous que le fichier /etc/ssh/sshd_config contient la directive UsePAM réglée sur yes :
+
+
+UsePAM yes
+Cela indique au serveur SSH d'utiliser PAM pour l'authentification.
+
+Définir l'utilisateur sshproxy : Assurez-vous que l'utilisateur sshproxy est correctement configuré et appartient au groupe approprié. Vous pouvez utiliser la commande useradd ou usermod pour définir l'utilisateur et le groupe.
+
+
+useradd -G group_name sshproxy
+Remplacez group_name par le nom du groupe auquel appartient sshproxy.
+
+Autoriser l'accès SSH : Assurez-vous que l'utilisateur sshproxy est autorisé à se connecter via SSH. Vous pouvez personnaliser les règles d'accès dans /etc/security/access.conf.
+
+Par exemple, pour autoriser sshproxy à se connecter depuis n'importe quelle adresse IP, vous pouvez ajouter la ligne suivante dans access.conf :
+
+
++:sshproxy:ALL
+Redémarrez le service SSH : Après avoir apporté ces modifications, redémarrez le service SSH pour qu'il prenne en compte les nouvelles configurations :
+
+
+sudo service ssh restart
+Après avoir effectué ces étapes, l'utilisateur sshproxy devrait pouvoir se connecter au serveur SSH en utilisant PAM, sans nécessiter de clé SSH ni de mot de passe. Cependant, il devra appartenir au groupe approprié et être autorisé à se connecter via SSH en fonction de la configuration dans access.conf. Assurez-vous de personnaliser ces configurations en fonction de vos besoins spécifiques.
+
+
+
+
+User
+dans ce cas je ne serais pas prompter pour saisir un password ?
+
+Si vous avez correctement configuré l'authentification PAM pour SSH, vous ne devriez pas être invité à saisir un mot de passe lors de la connexion. L'authentification se fera automatiquement en fonction des règles PAM configurées. Cependant, il est important de noter que l'authentification PAM dépend des règles spécifiques que vous avez configurées dans le fichier /etc/pam.d/sshd.
+
+Assurez-vous d'avoir configuré les règles PAM de manière à permettre l'authentification de l'utilisateur sshproxy sans demander de mot de passe. Cela dépendra de votre configuration PAM spécifique et des règles que vous avez définies.
+
+Si vous continuez à être invité à saisir un mot de passe, cela peut indiquer un problème dans la configuration PAM. Assurez-vous que la configuration PAM est correcte et que les règles sont bien définies pour l'authentification de l'utilisateur sshproxy sans mot de passe. Vous pouvez également consulter les journaux du serveur SSH (/var/log/auth.log sur les systèmes Debian/Ubuntu ou /var/log/secure sur les systèmes Red Hat/CentOS) pour obtenir des informations détaillées sur les tentatives d'authentification.
+
+Assurez-vous également de redémarrer le service SSH après avoir apporté des modifications à la configuration pour qu'elles prennent effet.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 PermitRootLogin no          # Désactive la connexion en tant que root
 PasswordAuthentication no   # Désactive l'authentification par mot de passe
 AllowUsers sshproxy         # Autorise uniquement l'utilisateur sshproxy
