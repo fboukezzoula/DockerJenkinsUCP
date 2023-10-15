@@ -3,7 +3,7 @@ PasswordAuthentication no   # Désactive l'authentification par mot de passe
 AllowUsers sshproxy         # Autorise uniquement l'utilisateur sshproxy
 
 
-
+https://github.com/robertdebock/docker-centos-openssh/blob/master/Dockerfile
 
 Host server1
     HostName server1.example.com
