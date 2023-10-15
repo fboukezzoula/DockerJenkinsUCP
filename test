@@ -1,3 +1,35 @@
+
+Pour configurer SSH pour une authentification basée sur le module PAM sans nécessiter de clé SSH ni de mot de passe, vous pouvez utiliser la configuration suivante. 
+Assurez-vous que le module PAM est correctement configuré pour autoriser l'accès au compte que vous souhaitez utiliser. Voici les étapes :
+
+Assurez-vous que le module PAM SSH est installé et correctement configuré sur le serveur SSH. Vous devez configurer le fichier sshd_config pour utiliser PAM. Vous pouvez vérifier si PAM est déjà activé 
+dans votre fichier sshd_config :
+UsePAM yes
+
+Ensuite, configurez le module PAM pour SSH en modifiant le fichier /etc/security/access.conf 
+(le chemin peut varier en fonction de votre distribution Linux) pour autoriser l'accès uniquement aux utilisateurs spécifiques. Voici un exemple de configuration pour n'autoriser qu'un compte spécifique :
+
++:username:ALL
+-:ALL:ALL
+
+Cela signifie que l'utilisateur username est autorisé, tandis que tous les autres utilisateurs sont refusés.
+
+Assurez-vous que l'utilisateur username est membre du groupe approprié (groupe principal). Vous pouvez vérifier cela avec la commande :
+bash
+
+groups username
+
+sudo service ssh restart
+Vous devrez maintenant essayer de vous connecter avec l'utilisateur username depuis votre client SSH. Par exemple :
+
+ssh username@serveur_ssh
+Le serveur SSH utilisera le module PAM pour vérifier l'accès de l'utilisateur. Si l'utilisateur username est autorisé dans le fichier access.conf, la connexion sera autorisée. Sinon, elle sera refusée.
+
+
+
+
+
+
 Host server1
     HostName server1.example.com
     User your_username
