@@ -1,3 +1,28 @@
+# Utilisez l'image Red Hat 8 comme base
+FROM registry.access.redhat.com/ubi8/ubi
+
+# Mettez à jour le système et installez OpenSSH Server
+RUN dnf -y update && dnf -y install openssh-server
+
+# Créez un utilisateur pour SSH sans mot de passe
+RUN useradd -m -s /bin/bash login
+
+# Définissez un mot de passe vide pour l'utilisateur (pour SSH sans mot de passe)
+RUN echo -e "\n" | passwd --stdin login
+
+# Configuration de SSH pour autoriser l'authentification PAM
+RUN sed -i 's/^#UsePAM yes/UsePAM yes/' /etc/ssh/sshd_config
+
+# Exposez le port SSH (par défaut, le port 22)
+EXPOSE 22
+
+# Démarrez le service SSH
+CMD ["/usr/sbin/sshd", "-D"]
+
+
+
+
+
 Si vous souhaitez utiliser une authentification PAM sans clé SSH ni mot de passe pour un compte sshproxy, vous devez effectuer quelques étapes de configuration spécifiques. Voici comment faire :
 
 Configurer PAM pour l'authentification SSH : La configuration PAM pour SSH est gérée par le fichier /etc/pam.d/sshd. Assurez-vous que le fichier contient les règles PAM nécessaires pour l'authentification sshproxy. Voici un exemple de configuration :
