@@ -1,3 +1,45 @@
+Si vous souhaitez uniquement une authentification basée sur un nom d'utilisateur sans clé ni mot de passe, vous pouvez configurer l'authentification PAM. Cela nécessite une configuration appropriée du fichier PAM (Pluggable Authentication Module) pour SSH. Voici comment vous pouvez le faire :
+
+Connectez-vous au conteneur en utilisant SSH avec le mot de passe que vous avez défini. Par exemple :
+
+bash
+Copy code
+ssh -p 2024 login@localhost
+Ensuite, éditez le fichier /etc/pam.d/sshd dans le conteneur. Vous pouvez utiliser un éditeur de texte tel que vim, nano, ou vi pour cela. Par exemple :
+
+bash
+Copy code
+sudo nano /etc/pam.d/sshd
+À l'intérieur du fichier /etc/pam.d/sshd, commentez ou supprimez toutes les lignes relatives à l'authentification par clé (comme auth required pam_pubkey.so) et assurez-vous que la seule méthode d'authentification restante est celle basée sur le nom d'utilisateur. Vous pouvez utiliser la ligne suivante :
+
+swift
+Copy code
+auth required pam_unix.so
+Enregistrez les modifications apportées au fichier PAM.
+
+Redémarrez le service SSH dans le conteneur pour appliquer les modifications :
+
+bash
+Copy code
+sudo service ssh restart
+Après avoir suivi ces étapes, l'authentification SSH dans votre conteneur devrait être basée uniquement sur le nom d'utilisateur, sans mot de passe ni clé. Vous pourrez vous connecter en utilisant l'utilisateur "login" sans fournir de mot de passe ou de clé :
+
+bash
+Copy code
+ssh -p 2024 login@localhost
+Veuillez noter que la désactivation de l'authentification par mot de passe et par clé SSH peut entraîner des problèmes de sécurité, car il n'y aura aucune authentification supplémentaire pour sécuriser l'accès au serveur SSH. Vous devrez vous assurer que le conteneur est correctement isolé et sécurisé.
+
+
+
+
+User
+ssh -p 2024 login@localhost
+je n'ai pas de mot de passe lors du build ...
+ChatGPT
+Si vous ne souhaitez pas utiliser de mot de passe pour l'authentification SSH, même pendant le build de l'image Docker, vous pouvez simplement créer un utilisateur sans mot de passe et activer l'authentification PAM SSH. Voici comment vous pouvez configurer cela dans le Dockerfile :
+
+Dockerfile
+Copy code
 # Utilisez l'image Red Hat 8 comme base
 FROM registry.access.redhat.com/ubi8/ubi
 
@@ -7,17 +49,22 @@ RUN dnf -y update && dnf -y install openssh-server
 # Créez un utilisateur pour SSH sans mot de passe
 RUN useradd -m -s /bin/bash login
 
-# Définissez un mot de passe vide pour l'utilisateur (pour SSH sans mot de passe)
-RUN echo -e "\n" | passwd --stdin login
-
-# Configuration de SSH pour autoriser l'authentification PAM
-RUN sed -i 's/^#UsePAM yes/UsePAM yes/' /etc/ssh/sshd_config
+# Configurez PAM SSH
+RUN sed -i 's/ChallengeResponseAuthentication yes/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
 
 # Exposez le port SSH (par défaut, le port 22)
 EXPOSE 22
 
 # Démarrez le service SSH
 CMD ["/usr/sbin/sshd", "-D"]
+Avec cette configuration, l'authentification SSH est basée sur le nom d'utilisateur uniquement, sans mot de passe ni clé. L'option ChallengeResponseAuthentication est définie sur "no" pour désactiver l'authentification par challenge-response, ce qui signifie que vous pourrez vous connecter en utilisant uniquement le nom d'utilisateur sans mot de passe ni clé SSH.
+
+Après avoir effectué cette modification dans votre Dockerfile, reconstruisez votre image Docker et exécutez-la. Vous pourrez ensuite vous connecter en utilisant l'utilisateur "login" sans mot de passe :
+
+bash
+Copy code
+ssh -p 22 login@localhost
+Assurez-vous que le port SSH exposé correspond au port que vous utilisez pour la connexion SSH (dans l'exemple ci-dessus, le port 22).
 
 
 
