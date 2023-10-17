@@ -1,6 +1,10 @@
-security.pam.services.sshd.allowNullPassword = true; 
+json_url="http://github.com/monrepo/myjsonfile.json"
+json_data=$(curl -s "$json_url")
 
-https://github.com/eehakkin/pam-ssh-auth-info
-https://serverfault.com/questions/1010831/how-to-configure-pam-to-authenticate-ssh-logins-with-password-otp-or-public
+# Utilisez jq pour extraire les noms d'utilisateur du JSON
+usernames=($(echo "$json_data" | jq -r 'keys[]'))
 
-
+# Parcourez les noms d'utilisateur et exécutez les commandes
+for username in "${usernames[@]}"; do
+    useradd "$username"
+done
