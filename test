@@ -1,10 +1,21 @@
-json_url="http://github.com/monrepo/myjsonfile.json"
-json_data=$(curl -s "$json_url")
+#!/bin/bash
 
-# Utilisez jq pour extraire les noms d'utilisateur du JSON
-usernames=($(echo "$json_data" | jq -r 'keys[]'))
+# Nom du déploiement et du conteneur
+DEPLOYMENT_NAME="nom_de_votre_deployment"
+CONTAINER_NAME="myapp"
 
-# Parcourez les noms d'utilisateur et exécutez les commandes
-for username in "${usernames[@]}"; do
-    useradd "$username"
+# Chemin vers le script à exécuter dans le conteneur
+SCRIPT_PATH="/opt/myscript.sh"
+
+# Récupère les noms des pods du déploiement
+POD_NAMES=$(kubectl get pods -l app=$DEPLOYMENT_NAME -o=jsonpath='{.items[*].metadata.name}')
+
+# Boucle sur les noms des pods
+for POD in $POD_NAMES; do
+  echo "Exécution de $SCRIPT_PATH dans le pod $POD ..."
+  
+  # Exécute le script dans le conteneur du pod
+  kubectl exec $POD -c $CONTAINER_NAME -- $SCRIPT_PATH
+  
+  echo "Script exécuté dans le pod $POD."
 done
