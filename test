@@ -1,21 +1,48 @@
+Pour créer automatiquement un utilisateur avec son répertoire personnel lors de la connexion SSH, vous pouvez utiliser PAM (Pluggable Authentication Module) avec les rpms pam_script sous CentOS/RHEL. Vous avez déjà la bonne idée en ajoutant la directive "auth optional /usr/lib64/security/pam_script.so" et en créant un script dans le répertoire /etc/pam-script.d. Voici les étapes pour le faire :
+
+Assurez-vous d'installer les paquets nécessaires si ce n'est pas déjà fait :
+
+Copy code
+sudo yum install pam_script
+Créez un script PAM pour créer l'utilisateur et son répertoire personnel. Par exemple, créez un fichier dans /etc/pam-script.d, par exemple /etc/pam-script.d/create_user, avec le contenu suivant :
+
+bash
+Copy code
 #!/bin/bash
 
-# Nom du déploiement et du conteneur
-DEPLOYMENT_NAME="nom_de_votre_deployment"
-CONTAINER_NAME="myapp"
+# Récupérer le nom d'utilisateur de l'environnement
+USERNAME="$PAM_USER"
 
-# Chemin vers le script à exécuter dans le conteneur
-SCRIPT_PATH="/opt/myscript.sh"
+# Vérifier si l'utilisateur existe
+if id "$USERNAME" &>/dev/null; then
+    # L'utilisateur existe déjà
+    exit 0
+else
+    # Créer l'utilisateur avec son répertoire personnel
+    useradd -m "$USERNAME"
+    exit 0
+fi
+Assurez-vous que le script est exécutable avec la commande :
 
-# Récupère les noms des pods du déploiement
-POD_NAMES=$(kubectl get pods -l app=$DEPLOYMENT_NAME -o=jsonpath='{.items[*].metadata.name}')
+bash
+Copy code
+sudo chmod +x /etc/pam-script.d/create_user
+Modifiez votre configuration PAM pour SSH. Ouvrez le fichier /etc/pam.d/sshd avec un éditeur de texte (en utilisant sudo) et ajoutez la ligne suivante à la fin de la section "auth":
 
-# Boucle sur les noms des pods
-for POD in $POD_NAMES; do
-  echo "Exécution de $SCRIPT_PATH dans le pod $POD ..."
-  
-  # Exécute le script dans le conteneur du pod
-  kubectl exec $POD -c $CONTAINER_NAME -- $SCRIPT_PATH
-  
-  echo "Script exécuté dans le pod $POD."
-done
+bash
+Copy code
+auth optional /usr/lib64/security/pam_script.so
+Assurez-vous que le fichier /etc/pam.d/sshd ressemble à ceci :
+
+text
+Copy code
+# /etc/pam.d/sshd
+auth       required     pam_sepermit.so
+auth       substack     password-auth
+auth       include      postlogin
+auth optional /usr/lib64/security/pam_script.so
+Assurez-vous que votre serveur SSH est configuré pour autoriser l'authentification par clé SSH.
+
+Testez votre configuration en vous déconnectant du serveur SSH (si vous êtes déjà connecté) et en vous reconnectant. Lorsque l'utilisateur se connectera via SSH, le script PAM vérifiera s'il existe déjà et le créera si nécessaire.
+
+Veuillez noter que cette méthode est basée sur PAM et peut nécessiter des ajustements en fonction de votre configuration spécifique. Assurez-vous de prendre des précautions de sécurité appropriées, car la création automatique d'utilisateurs peut présenter des risques potentiels.
