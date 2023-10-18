@@ -46,3 +46,21 @@ Assurez-vous que votre serveur SSH est configuré pour autoriser l'authentificat
 Testez votre configuration en vous déconnectant du serveur SSH (si vous êtes déjà connecté) et en vous reconnectant. Lorsque l'utilisateur se connectera via SSH, le script PAM vérifiera s'il existe déjà et le créera si nécessaire.
 
 Veuillez noter que cette méthode est basée sur PAM et peut nécessiter des ajustements en fonction de votre configuration spécifique. Assurez-vous de prendre des précautions de sécurité appropriées, car la création automatique d'utilisateurs peut présenter des risques potentiels.
+
+L'erreur "input_userauth_request: invalid user USERNAME [preauth]" indique que SSH n'accepte pas le nom d'utilisateur que vous utilisez lors de la tentative de connexion. Vous devez vous assurer que le nom d'utilisateur que vous utilisez est correct et qu'il correspond au nom d'utilisateur que vous avez configuré dans le script PAM. Assurez-vous également que vous utilisez la clé SSH correspondante pour cet utilisateur.
+
+Voici quelques étapes à suivre pour résoudre ce problème :
+
+Vérifiez que le nom d'utilisateur que vous utilisez lors de la connexion SSH correspond exactement au nom d'utilisateur que vous avez configuré dans le script PAM. Les noms d'utilisateurs sont sensibles à la casse, donc assurez-vous qu'ils correspondent exactement.
+
+Assurez-vous que le script PAM que vous avez créé (dans /etc/pam-script.d/create_user) est correctement configuré pour créer un utilisateur avec le même nom que celui que vous utilisez pour vous connecter. Vérifiez que la variable USERNAME dans le script est correcte.
+
+Vérifiez que la clé publique SSH correspondant à l'utilisateur est présente dans le répertoire ~/.ssh/authorized_keys du répertoire personnel de l'utilisateur. Assurez-vous que le nom de fichier et le chemin de la clé publique correspondent au nom d'utilisateur que vous utilisez pour vous connecter.
+
+Assurez-vous que le répertoire personnel de l'utilisateur est créé lors de la création de l'utilisateur. Le script PAM que vous avez configuré (/etc/pam-script.d/create_user) devrait créer un répertoire personnel avec la commande useradd -m "$USERNAME". Assurez-vous que cette commande est correcte.
+
+Redémarrez le service SSH pour vous assurer que les modifications apportées à la configuration PAM sont prises en compte :
+
+Copy code
+sudo systemctl restart sshd
+Après avoir vérifié ces points, essayez de vous connecter à nouveau en utilisant le nom d'utilisateur que vous avez configuré dans le script PAM. Si le problème persiste, assurez-vous de fournir les détails de votre configuration SSH et du script PAM pour une assistance plus spécifique.
