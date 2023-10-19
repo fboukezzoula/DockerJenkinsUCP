@@ -1,3 +1,47 @@
+Oui, vous pouvez également utiliser la classe login linux avec sshd (/etc/login.conf) pour autoriser tous les utilisateurs, hosts.... seul les users ayant une clé sur leur compte GitHub Enterprise.
+
+La configuration est la même que pour GitHub public. Vous devez modifier le fichier de configuration /etc/login.conf et ajouter la ligne suivante :
+
+auth required /lib/security/pam_access.so /etc/ssh/sshd_config
+Vous devez ensuite modifier le fichier de configuration /etc/ssh/sshd_config et ajouter la ligne suivante :
+
+AllowUsers @github
+Voici un exemple de configuration complète :
+
+# /etc/login.conf
+auth required /lib/security/pam_access.so /etc/ssh/sshd_config
+
+# /etc/ssh/sshd_config
+UsePAM yes
+AllowUsers @github
+Cette configuration autorise tous les utilisateurs ayant une clé sur leur compte GitHub Enterprise à se connecter à tous les hosts.
+
+Vous pouvez également modifier le fichier de configuration /etc/ssh/sshd_config pour limiter l'accès aux hosts spécifiques. Par exemple, vous pouvez ajouter la ligne suivante :
+
+AllowUsers @github localhost
+Cette configuration autorise uniquement les utilisateurs ayant une clé sur leur compte GitHub Enterprise à se connecter au host local.
+
+Je vous recommande de tester cette configuration avant de la mettre en production. Vous pouvez tester la configuration en vous connectant au serveur SSH avec un utilisateur ayant une clé sur son compte GitHub Enterprise. Si la connexion est réussie, la configuration est correcte.
+
+Voici quelques conseils pour sécuriser votre configuration :
+
+Stockez les clés ssh dans un répertoire sécurisé.
+Accordez uniquement les autorisations d'exécution aux clés ssh.
+Utilisez un langage de script sécurisé.
+Vérifiez attentivement les clés ssh pour détecter les vulnérabilités potentielles.
+J'espère que cela vous aidera !
+
+Voici quelques informations supplémentaires spécifiques à GitHub Enterprise :
+
+Pour obtenir la liste des utilisateurs de votre organisation GitHub Enterprise, vous pouvez utiliser l'API GitHub Enterprise.
+Pour obtenir la clé SSH d'un utilisateur, vous pouvez utiliser l'API GitHub Enterprise ou la console GitHub Enterprise.
+Vous pouvez trouver plus d'informations sur l'API GitHub Enterprise et la console GitHub Enterprise dans la documentation GitHub Enterprise.
+
+
+
+
+
+
 auth required pam_script.so umask=0077 path=/path/to/script env=PAM_USER
 Cependant, cette configuration peut ne pas fonctionner si l'utilisateur n'existe pas. Dans ce cas, le script ne sera pas exécuté et l'utilisateur ne sera pas authentifié.
 
