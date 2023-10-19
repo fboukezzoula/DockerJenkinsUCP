@@ -1,3 +1,86 @@
+Vous avez raison, la variable d'environnement PAM_USER n'est pas passée par défaut par le module pam_script. Pour la passer, vous devez ajouter l'option env=PAM_USER à la ligne de configuration du module dans le fichier /etc/pam.d/sshd.
+
+Voici la configuration modifiée :
+
+auth required pam_script.so umask=0077 env=PAM_USER path=/path/to/script
+Une fois que vous avez modifié la configuration, vous devez redémarrer le service SSH.
+
+sudo systemctl restart sshd
+Maintenant, la variable d'environnement PAM_USER sera passée au script et vous pourrez utiliser cette variable pour créer l'utilisateur.
+
+Voici un exemple de script qui utilise la variable d'environnement PAM_USER :
+
+Bash
+#!/bin/bash
+
+username=$PAM_USER
+password=$PAM_AUTHTOK
+
+useradd -m -d /home/$username -s /bin/bash $username
+passwd $username
+Use code with caution. Learn more
+Ce script est équivalent au script utilisé pour configurer le module pam_exec, mais il utilise la variable d'environnement PAM_USER pour obtenir le nom d'utilisateur.
+
+Voici les étapes détaillées pour configurer la création automatique d'un utilisateur lors de sa connexion SSH avec authentification par clé SSH sous Linux CentOS 7 ou RHEL 8 en utilisant le module pam_script et la variable d'environnement PAM_USER :
+
+Créez un script qui créera l'utilisateur.
+
+Modifiez le fichier /etc/pam.d/sshd et ajoutez la ligne auth required pam_script.so umask=0077 env=PAM_USER path=/path/to/script.
+
+Redémarrez le service SSH.
+
+Testez votre configuration en vous connectant au serveur SSH avec un utilisateur qui n'existe pas encore.
+
+ssh foo@localhost
+Si la configuration est correcte, vous devriez pouvoir vous connecter au serveur SSH avec votre clé SSH
+
+
+
+
+
+
+*
+
+
+
+
+
+
+
+
+
+
+Alternative
+
+Si vous ne souhaitez pas créer un script, vous pouvez utiliser le module pam_script. Ce module permet d'exécuter un script pour créer un utilisateur, mais il est plus flexible que pam_exec.
+
+Pour configurer le module pam_script, vous devez modifier le fichier /etc/pam.d/sshd et ajouter la ligne suivante :
+
+auth required pam_script.so umask=0077 path=/path/to/script
+Où /path/to/script est le chemin d'accès au script qui créera l'utilisateur.
+
+Le script aura accès à l'environnement d'exécution de l'authentification, y compris les variables suivantes :
+
+PAM_USER : le nom d'utilisateur
+PAM_AUTHTOK : le mot de passe
+Vous pouvez utiliser ces variables pour créer l'utilisateur.
+
+Par exemple, le script suivant créera un utilisateur nommé foo avec le mot de passe bar :
+
+Bash
+#!/bin/bash
+
+username=$PAM_USER
+password=$PAM_AUTHTOK
+
+useradd -m -d /home/$username -s /bin/bash $username
+passwd $username
+Use code with caution. Learn more
+Ce script est équivalent au script utilisé pour configurer le module pam_exec.
+
+
+
+
 auth       required     pam_sepermit.so
 auth       substack     password-auth
 auth       include      postlogin
