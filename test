@@ -1,3 +1,8 @@
+auth       [success=1 default=ignore] pam_exec.so expose_authtok /bin/bash -c 'echo "PAM_USER=$PAM_USER" >> /tmp/pam_user.log'
+
+
+
+
 Pour créer automatiquement un utilisateur avec son répertoire personnel lors de la connexion SSH, vous pouvez utiliser PAM (Pluggable Authentication Module) avec les rpms pam_script sous CentOS/RHEL. Vous avez déjà la bonne idée en ajoutant la directive "auth optional /usr/lib64/security/pam_script.so" et en créant un script dans le répertoire /etc/pam-script.d. Voici les étapes pour le faire :
 
 Assurez-vous d'installer les paquets nécessaires si ce n'est pas déjà fait :
