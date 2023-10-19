@@ -1,3 +1,7 @@
+https://github.com/neutrinolabs/xrdp/issues/1882
+https://www.drupal8.ovh/en/tutoriels/274/notify-when-ssh-connection-success
+
+
 AllowStreamRemoteAddress CIDR_TARGET
 AllowStreamLocalAddress yes
 
