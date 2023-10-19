@@ -1,3 +1,38 @@
+D'accord, voici quelques vérifications que vous pouvez effectuer pour résoudre ce problème :
+
+Assurez-vous que le script est exécutable. Vous pouvez utiliser la commande chmod +x /path/to/script pour le rendre exécutable.
+Assurez-vous que le script est dans le répertoire /etc/pam.d.
+Assurez-vous que le script ne contient pas d'erreurs. Vous pouvez utiliser la commande sh /path/to/script pour exécuter le script manuellement et voir si vous obtenez des erreurs.
+Si vous avez effectué toutes ces vérifications et que vous rencontrez toujours le problème, vous pouvez essayer de passer la variable d'environnement PAM_USER manuellement à votre script. Vous pouvez faire cela en ajoutant la ligne suivante à votre script :
+
+export PAM_USER=$username
+Où username est le nom d'utilisateur que vous souhaitez créer.
+
+Voici un exemple de script qui passe la variable d'environnement PAM_USER manuellement :
+
+Bash
+#!/bin/bash
+
+export PAM_USER=$username
+
+useradd -m -d /home/$username -s /bin/bash $username
+passwd $username
+Use code with caution. Learn more
+Ce script est équivalent au script utilisé pour configurer le module pam_exec, mais il passe la variable d'environnement PAM_USER manuellement.
+
+Si vous passez la variable d'environnement PAM_USER manuellement et que vous pouvez créer l'utilisateur, cela signifie que le problème vient de la configuration du module pam_script. Vous pouvez essayer de modifier la configuration du module pour voir si vous pouvez résoudre le problème.
+
+Voici quelques modifications que vous pouvez essayer :
+
+Changez l'option env=PAM_USER en env=.*. Cela permettra à tous les environnements d'exécution de l'authentification d'être passés au script.
+Changez l'option env=PAM_USER en env=PAM_USER,PAM_AUTHTOK. Cela permettra à la fois les variables d'environnement PAM_USER et PAM_AUTHTOK d'être passées au script.
+J'espère que cela vous aidera à résoudre le problème.
+
+
+
+
+
+
 Vous avez raison, la variable d'environnement PAM_USER n'est pas passée par défaut par le module pam_script. Pour la passer, vous devez ajouter l'option env=PAM_USER à la ligne de configuration du module dans le fichier /etc/pam.d/sshd.
 
 Voici la configuration modifiée :
