@@ -1,3 +1,30 @@
+auth required pam_script.so umask=0077 path=/path/to/script env=PAM_USER
+Cependant, cette configuration peut ne pas fonctionner si l'utilisateur n'existe pas. Dans ce cas, le script ne sera pas exécuté et l'utilisateur ne sera pas authentifié.
+
+Vous pouvez essayer d'ajouter une condition au script pour vérifier si l'utilisateur existe. Si l'utilisateur n'existe pas, le script peut créer l'utilisateur et ensuite s'exécuter.
+
+Voici un exemple de script avec une condition pour vérifier si l'utilisateur existe :
+
+Bash
+#!/bin/bash
+
+username=$PAM_USER
+
+# Vérifie si l'utilisateur existe
+if ! id -u $username > /dev/null 2>&1; then
+    # L'utilisateur n'existe pas, on le crée
+    useradd -m -d /home/$username -s /bin/bash $username
+fi
+
+# Exécute le script
+echo "Le nom d'utilisateur est $PAM_USER"
+
+
+
+
+
+
+
 D'accord, cela suggère que le problème est lié à la configuration du module pam_script.
 
 Vous pouvez essayer de modifier la configuration du module pam_script pour voir si vous pouvez résoudre le problème.
