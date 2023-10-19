@@ -1,9 +1,30 @@
-#%PAM-1.0
+Créez un script externe pour définir la variable PAM_USER. Par exemple, créez un fichier /usr/local/bin/set_pam_user.sh avec le contenu suivant :
+bash
+Copy code
+#!/bin/bash
+echo "PAM_USER=$PAM_USER" >> /tmp/pam_user.log
+exit 0
+Assurez-vous que ce script est exécutable :
+
+bash
+Copy code
+chmod +x /usr/local/bin/set_pam_user.sh
+Modifiez votre fichier /etc/pam.d/sshd pour appeler ce script externe :
+plaintext
+Copy code
 auth       required     pam_sepermit.so
 auth       substack     password-auth
 auth       include      postlogin
-auth       requisite    pam_exec.so /bin/bash -c 'echo "PAM_USER=$PAM_USER" >> /tmp/pam_user.log'
+auth       required     pam_exec.so /usr/local/bin/set_pam_user.sh
 auth       optional     pam_script.so
+Redémarrez le service SSH :
+bash
+Copy code
+sudo systemctl restart sshd
+Testez à nouveau la connexion SSH et vérifiez le contenu du fichier /tmp/pam_user.log pour voir si la variable PAM_USER est correctement définie.
+Cette approche utilise un script externe pour définir la variable PAM_USER, contournant ainsi le problème potentiel du module pam_exec directement dans le fichier PAM. Assurez-vous que le script est correctement exécutable et que le chemin vers le script dans le fichier PAM est correct.
+
+
 
 
 
