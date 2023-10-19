@@ -1,3 +1,11 @@
+auth       required     pam_sepermit.so
+auth       substack     password-auth
+auth       include      postlogin
+auth       optional     pam_script.so /etc/pam-script.d/create_user
+
+
+
+
 Créez un script externe pour définir la variable PAM_USER. Par exemple, créez un fichier /usr/local/bin/set_pam_user.sh avec le contenu suivant :
 bash
 Copy code
