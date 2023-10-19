@@ -1,3 +1,53 @@
+e comprends votre frustration. Il peut être difficile de configurer un serveur SSH.
+
+Pour que le serveur SSH soit "transparent", vous devez désactiver l'authentification. Vous pouvez le faire en modifiant le fichier de configuration /etc/ssh/sshd_config et en ajoutant la ligne suivante :
+
+PasswordAuthentication no
+Cette ligne désactivera l'authentification par mot de passe. Vous pouvez également désactiver l'authentification par clé en ajoutant la ligne suivante :
+
+PubkeyAuthentication no
+Cette ligne désactivera l'authentification par clé.
+
+Une fois que vous avez désactivé l'authentification, le serveur SSH acceptera toutes les connexions, quel que soit l'utilisateur ou la clé SSH.
+
+Cependant, il est important de noter que cela représente un risque de sécurité. Tout utilisateur qui a un accès physique au serveur SSH pourra se connecter au serveur sans aucune authentification.
+
+Si vous souhaitez que le serveur SSH soit transparent, mais que vous souhaitez également limiter l'accès aux utilisateurs autorisés, vous pouvez utiliser un proxy SSH. Un proxy SSH est un serveur qui se trouve entre le client et le serveur SSH. Le proxy SSH peut être utilisé pour authentifier les utilisateurs avant de leur permettre de se connecter au serveur SSH.
+
+Il existe de nombreux proxy SSH disponibles, tels que OpenSSH, ProxyJump et ProxyChains.
+
+Voici quelques exemples de configuration d'un proxy SSH pour limiter l'accès à un serveur SSH :
+
+OpenSSH : Vous pouvez configurer OpenSSH pour authentifier les utilisateurs en utilisant un fichier de mots de passe ou un service LDAP.
+ProxyJump : Vous pouvez configurer ProxyJump pour authentifier les utilisateurs en utilisant un serveur SSH central.
+ProxyChains : Vous pouvez configurer ProxyChains pour authentifier les utilisateurs en utilisant un serveur SSH central ou un service proxy HTTP.
+J'espère que cela vous aidera !
+
+profile picture
+oui je limiterai les règles en outbound uniquement un cidr cible
+
+C'est une bonne idée. Cela permettra de limiter l'accès du serveur SSH aux utilisateurs autorisés.
+
+Vous pouvez modifier le fichier de configuration /etc/ssh/sshd_config pour limiter les règles en outbound. Vous pouvez ajouter la ligne suivante :
+
+AllowStreamLocalAddress yes
+Cette ligne permettra au serveur SSH d'accepter les connexions entrantes depuis n'importe quel hôte.
+
+Vous pouvez également ajouter la ligne suivante :
+
+AllowStreamRemoteAddress CIDR_TARGET
+Cette ligne limitera les connexions sortantes du serveur SSH au CIDR cible spécifié.
+
+Par exemple, si vous souhaitez limiter les connexions sortantes du serveur SSH à un hôte avec l'adresse IP 192.168.1.1, vous pouvez ajouter la ligne suivante :
+
+AllowStreamRemoteAddress 192.168.1.1
+Une fois que vous avez ajouté ces lignes de configuration, vous devez redémarrer le service SSH pour que les modifications prennent effet. Vous pouvez redémarrer le service SSH en exécutant la commande suivante :
+
+systemctl restart sshd
+Une fois que vous avez redémarré le service SSH, les utilisateurs autorisés pourront se connecter au serveur SSH, mais ils ne pourront se connecter qu'aux hôtes qui se trouvent dans le CIDR cible.
+
+J'espère que cela vous aidera !
+
 Je comprends. Vous pouvez utiliser le module pam_exec.so pour créer un compte utilisateur automatiquement si l'utilisateur n'existe pas.
 
 Pour ce faire, vous devez modifier le fichier de configuration /etc/pam.d/sshd et ajouter la ligne suivante :
