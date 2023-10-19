@@ -1,4 +1,6 @@
 auth       [success=1 default=ignore] pam_exec.so expose_authtok /bin/bash -c 'echo "PAM_USER=$PAM_USER" >> /tmp/pam_user.log'
+auth       required     pam_exec.so /bin/bash -c 'echo "PAM_USER=$PAM_USER" >> /tmp/pam_user.log'
+
 
 
 
