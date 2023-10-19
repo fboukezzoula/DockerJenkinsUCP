@@ -1,3 +1,44 @@
+Je comprends. Vous pouvez utiliser le module pam_exec.so pour créer un compte utilisateur automatiquement si l'utilisateur n'existe pas.
+
+Pour ce faire, vous devez modifier le fichier de configuration /etc/pam.d/sshd et ajouter la ligne suivante :
+
+auth required pam_exec.so /path/to/script
+Où /path/to/script est le chemin vers un script qui créera le compte utilisateur.
+
+Le script doit prendre deux arguments : le nom d'utilisateur et la clé SSH. Le script doit créer un compte utilisateur avec le nom d'utilisateur spécifié et ajouter la clé SSH à l'utilisateur.
+
+Voici un exemple de script qui peut être utilisé :
+
+#!/bin/bash
+
+# Vérifiez si l'utilisateur existe
+if ! grep -q "$1" /etc/passwd; then
+
+  # Créez le compte utilisateur
+  useradd -m "$1"
+
+  # Ajoutez la clé SSH à l'utilisateur
+  ssh-keyscan -t rsa "$2" >> /home/"$1"/.ssh/authorized_keys
+
+fi
+Ce script vérifiera si l'utilisateur existe déjà. Si l'utilisateur n'existe pas, le script créera un compte utilisateur avec le nom d'utilisateur spécifié. Le script ajoutera ensuite la clé SSH spécifiée à l'utilisateur.
+
+Une fois que vous avez ajouté la ligne de configuration au fichier /etc/pam.d/sshd, vous devez redémarrer le service SSH pour que les modifications prennent effet. Vous pouvez redémarrer le service SSH en exécutant la commande suivante :
+
+systemctl restart sshd
+Une fois que vous avez redémarré le service SSH, vous devriez pouvoir vous connecter au serveur SSH avec un utilisateur qui n'existe pas encore. Le module pam_exec.so créera automatiquement le compte utilisateur et ajoutera la clé SSH.
+
+Voici les étapes de dépannage que vous pouvez suivre si vous rencontrez des problèmes :
+
+Vérifiez que le script fonctionne correctement. Vous pouvez tester le script en le lançant manuellement avec les arguments appropriés.
+Vérifiez que la ligne de configuration est correcte. Vous pouvez vérifier la syntaxe de la ligne de configuration en utilisant la commande man pam_exec.so.
+Vérifiez que le service SSH est en cours d'exécution. Vous pouvez vérifier l'état du service SSH en exécutant la commande systemctl status sshd.
+J'espère que cela vous aidera !
+
+
+
+
+
 Oui, vous pouvez également utiliser la classe login linux avec sshd (/etc/login.conf) pour autoriser tous les utilisateurs, hosts.... seul les users ayant une clé sur leur compte GitHub Enterprise.
 
 La configuration est la même que pour GitHub public. Vous devez modifier le fichier de configuration /etc/login.conf et ajouter la ligne suivante :
