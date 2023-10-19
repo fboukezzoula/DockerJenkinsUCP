@@ -1,2 +1,10 @@
 AllowStreamRemoteAddress CIDR_TARGET
 AllowStreamLocalAddress yes
+
+Il existe de nombreux proxy SSH disponibles, tels que OpenSSH, ProxyJump et ProxyChains.
+
+Voici quelques exemples de configuration d'un proxy SSH pour limiter l'accès à un serveur SSH :
+
+OpenSSH : Vous pouvez configurer OpenSSH pour authentifier les utilisateurs en utilisant un fichier de mots de passe ou un service LDAP.
+ProxyJump : Vous pouvez configurer ProxyJump pour authentifier les utilisateurs en utilisant un serveur SSH central.
+ProxyChains : Vous pouvez configurer ProxyChains pour authentifier les utilisateurs en utilisant un serveur SSH central ou un service proxy HTTP.
