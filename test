@@ -1,5 +1,14 @@
 https://github.com/neutrinolabs/xrdp/issues/1882
 https://www.drupal8.ovh/en/tutoriels/274/notify-when-ssh-connection-success
+auth required pam_exec.so umask=0077 path=/path/to/script env=PAM_USER
+
+#!/bin/bash
+# /path/script
+
+# Obtenez le nom d'utilisateur à partir du premier argument
+PAM_USER="$1"
+
+# Utilisez PAM_USER comme nécessaire
 
 
 AllowStreamRemoteAddress CIDR_TARGET
