@@ -1,3 +1,23 @@
+D'accord, cela suggère que le problème est lié à la configuration du module pam_script.
+
+Vous pouvez essayer de modifier la configuration du module pam_script pour voir si vous pouvez résoudre le problème.
+
+Voici quelques modifications que vous pouvez essayer :
+
+Changez l'option env=PAM_USER en env=PAM_USER,PAM_TYPE. Cela permettra à la fois les variables d'environnement PAM_USER et PAM_TYPE d'être passées au script.
+Changez l'option env=PAM_USER en env=.*. Cela permettra à tous les environnements d'exécution de l'authentification d'être passés au script.
+Changez la ligne de configuration du module pam_script en auth required pam_script.so umask=0077 path=/path/to/script env=PAM_USER. Cela permettra de passer la variable d'environnement PAM_USER au script, même si la variable n'est pas définie par défaut.
+Si vous changez la configuration du module pam_script, vous devez redémarrer le service SSH pour que les modifications prennent effet.
+
+J'espère que cela vous aidera à résoudre le problème.
+
+Si vous avez d'autres questions ou problèmes, n'hésitez pas à me les poser.
+
+
+
+
+
+
 D'accord, voici quelques vérifications que vous pouvez effectuer pour résoudre ce problème :
 
 Assurez-vous que le script est exécutable. Vous pouvez utiliser la commande chmod +x /path/to/script pour le rendre exécutable.
