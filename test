@@ -1,23 +1,42 @@
-https://github.com/neutrinolabs/xrdp/issues/1882
-https://www.drupal8.ovh/en/tutoriels/274/notify-when-ssh-connection-success
-auth required pam_exec.so umask=0077 path=/path/to/script env=PAM_USER
+Il semble que vous ayez des problèmes pour faire fonctionner Podman avec un proxy sous RHEL 8 pour la construction d'images, malgré la définition des variables d'environnement http_proxy, https_proxy, no_proxy, etc. pour votre proxy. Voici quelques étapes que vous pouvez suivre pour résoudre ce problème :
 
-#!/bin/bash
-# /path/script
+Assurez-vous que Podman est configuré pour utiliser le proxy du système :
+Vous pouvez vérifier la configuration de Podman en utilisant la commande suivante :
 
-# Obtenez le nom d'utilisateur à partir du premier argument
-PAM_USER="$1"
+bash
+Copy code
+podman system info
+Assurez-vous que l'option "HTTP Proxy" pointe vers votre proxy local ou vers l'adresse appropriée. Si ce n'est pas le cas, vous pouvez configurer Podman pour utiliser le proxy du système en ajoutant la ligne suivante dans le fichier de configuration de Podman, généralement situé à /etc/containers/containers.conf :
 
-# Utilisez PAM_USER comme nécessaire
+ini
+Copy code
+[proxies]
+"default" = "system"
+Cela devrait permettre à Podman d'utiliser le proxy du système défini dans les variables d'environnement.
 
+Redémarrez le service Podman :
+Après avoir modifié la configuration de Podman, redémarrez le service Podman pour que les modifications prennent effet :
 
-AllowStreamRemoteAddress CIDR_TARGET
-AllowStreamLocalAddress yes
+bash
+Copy code
+systemctl restart podman
+Assurez-vous que les variables d'environnement du proxy sont correctement définies :
+Comme vous l'avez mentionné, assurez-vous que les variables d'environnement http_proxy, https_proxy, no_proxy, etc. sont correctement définies avec les valeurs appropriées. Vous pouvez les vérifier en utilisant la commande echo :
 
-Il existe de nombreux proxy SSH disponibles, tels que OpenSSH, ProxyJump et ProxyChains.
+bash
+Copy code
+echo $http_proxy
+echo $https_proxy
+echo $no_proxy
+Testez la connectivité au proxy :
+Assurez-vous que votre système est capable de se connecter au proxy en utilisant les variables d'environnement définies. Vous pouvez utiliser la commande curl pour effectuer un test de connexion :
 
-Voici quelques exemples de configuration d'un proxy SSH pour limiter l'accès à un serveur SSH :
+bash
+Copy code
+curl http://example.com --proxy $http_proxy
+Assurez-vous que les fichiers PAC sont correctement configurés :
+Vérifiez que les fichiers de configuration Proxy Auto-Configuration (PAC) sont correctement configurés sur votre système et qu'ils sont accessibles. Podman utilisera ces fichiers s'ils sont correctement configurés.
 
-OpenSSH : Vous pouvez configurer OpenSSH pour authentifier les utilisateurs en utilisant un fichier de mots de passe ou un service LDAP.
-ProxyJump : Vous pouvez configurer ProxyJump pour authentifier les utilisateurs en utilisant un serveur SSH central.
-ProxyChains : Vous pouvez configurer ProxyChains pour authentifier les utilisateurs en utilisant un serveur SSH central ou un service proxy HTTP.
+Si, après avoir suivi ces étapes, vous rencontrez toujours des problèmes pour construire des images avec Podman via le proxy, vous pouvez également consulter les journaux de Podman (journalctl -u podman.service) pour des informations plus détaillées sur les erreurs rencontrées.
+
+Enfin, assurez-vous que vous avez les droits d'accès appropriés pour utiliser le proxy, car certaines politiques d'entreprise peuvent restreindre l'accès aux proxies. Si vous rencontrez des problèmes persistants, il peut être utile de travailler en étroite collaboration avec le service informatique de votre entreprise pour résoudre ces problèmes.
