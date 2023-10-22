@@ -1,3 +1,43 @@
+Si vous avez pu résoudre le problème en ajoutant l'option --network=true lors de la création du conteneur avec Podman, cela indique que SELinux restreint l'accès réseau des conteneurs au système hôte par défaut.
+
+Pour permettre aux conteneurs Podman de communiquer avec le réseau de l'hôte en utilisant SELinux, vous pouvez ajouter une règle personnalisée. Voici comment vous pouvez créer une règle personnalisée pour autoriser la communication réseau des conteneurs :
+
+Identifiez le port que vous souhaitez autoriser pour la communication du conteneur. Par exemple, si votre proxy utilise le port 3128, vous pouvez autoriser ce port.
+
+Utilisez la commande audit2allow pour générer une règle SELinux personnalisée basée sur les journaux de SELinux. Exécutez la commande suivante après avoir effectué une opération de conteneur qui a été refusée par SELinux (par exemple, après avoir exécuté le conteneur avec l'option --network=true) :
+
+bash
+Copy code
+audit2allow -a
+Cela affichera les règles qui ont été refusées. Vous pouvez les copier dans un fichier.
+
+Créez un fichier de règles personnalisées, par exemple custom-containers.te, et collez-y les règles générées.
+
+Utilisez checkmodule pour compiler les règles :
+
+bash
+Copy code
+checkmodule -M -m -o custom-containers.mod custom-containers.te
+Utilisez semodule_package pour générer un module SELinux :
+
+bash
+Copy code
+semodule_package -o custom-containers.pp -m custom-containers.mod
+Utilisez semodule pour installer le module SELinux :
+
+bash
+Copy code
+semodule -i custom-containers.pp
+Redémarrez le conteneur pour que les nouvelles règles SELinux prennent effet.
+
+Cela devrait autoriser la communication réseau du conteneur avec le port spécifié. Assurez-vous de personnaliser les règles en fonction de vos besoins spécifiques.
+
+N'oubliez pas que l'ajout de règles SELinux personnalisées peut potentiellement introduire des vulnérabilités de sécurité si elles sont mal configurées, alors assurez-vous de comprendre les implications de sécurité avant d'appliquer des règles personnalisées.
+
+
+
+
+
 Il semble que vous ayez des problèmes pour faire fonctionner Podman avec un proxy sous RHEL 8 pour la construction d'images, malgré la définition des variables d'environnement http_proxy, https_proxy, no_proxy, etc. pour votre proxy. Voici quelques étapes que vous pouvez suivre pour résoudre ce problème :
 
 Assurez-vous que Podman est configuré pour utiliser le proxy du système :
