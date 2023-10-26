@@ -1,3 +1,90 @@
+Pour configurer Podman en tant que service systemd sous RHEL 8 avec le runtime CRUN, le réseau CNI, etc., tout en permettant aux utilisateurs d'utiliser Podman en mode rootless dans leurs profils respectifs, vous devrez effectuer plusieurs étapes de configuration. Voici un guide étape par étape pour accomplir cela :
+
+Installation de Podman et des dépendances :
+Assurez-vous d'installer Podman, CRUN, et les composants CNI nécessaires sur votre système. Vous pouvez le faire à l'aide du gestionnaire de paquets dnf :
+
+bash
+Copy code
+sudo dnf install -y podman crun
+Configuration du service systemd pour Podman en mode système :
+Créez un fichier de service systemd pour Podman, par exemple /etc/systemd/system/podman.service, avec le contenu suivant :
+
+ini
+Copy code
+[Unit]
+Description=Podman service
+Documentation=man:podman-system-service(1)
+
+[Service]
+ExecStart=/usr/bin/podman system service --time=0
+Restart=always
+TimeoutStopSec=0
+KillMode=none
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+Assurez-vous d'ajuster le chemin de l'exécutable podman en fonction de votre installation.
+
+Activer et démarrer le service systemd :
+
+bash
+Copy code
+sudo systemctl enable podman.service
+sudo systemctl start podman.service
+Configuration de Podman en mode rootless :
+Chaque utilisateur qui souhaite utiliser Podman en mode rootless doit effectuer les étapes suivantes :
+
+a. Créez un fichier ~/.config/containers/containers.conf s'il n'existe pas et ajoutez la configuration suivante :
+
+yaml
+Copy code
+runtime = "crun"
+cni = "/path/to/cni-plugins-directory" # Remplacez par le chemin du répertoire CNI
+b. Assurez-vous que le répertoire /path/to/cni-plugins-directory existe et contient les plugins CNI requis. Vous pouvez télécharger ces plugins depuis le référentiel CNI officiel (https://github.com/containernetworking/plugins).
+
+c. Configurez les variables d'environnement pour Podman dans le profil de l'utilisateur, par exemple, dans ~/.bashrc ou ~/.zshrc :
+
+bash
+Copy code
+export PATH=$HOME/.local/bin:$PATH
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+Ces variables d'environnement garantissent que les binaires et les sockets de Podman en mode rootless sont correctement configurés.
+
+Redémarrez la session de l'utilisateur ou rechargez le profil :
+
+bash
+Copy code
+source ~/.bashrc  # ou source ~/.zshrc
+L'utilisateur devrait maintenant pouvoir utiliser Podman en mode rootless avec la configuration spécifiée.
+
+Assurez-vous d'adapter ces étapes en fonction de vos besoins spécifiques et de la structure de votre système. Ce guide fournit une base pour configurer Podman en tant que service systemd en mode système et permettre aux utilisateurs d'utiliser Podman en mode rootless dans leurs profils respectifs.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Si vous avez pu résoudre le problème en ajoutant l'option --network=true lors de la création du conteneur avec Podman, cela indique que SELinux restreint l'accès réseau des conteneurs au système hôte par défaut.
 
 Pour permettre aux conteneurs Podman de communiquer avec le réseau de l'hôte en utilisant SELinux, vous pouvez ajouter une règle personnalisée. Voici comment vous pouvez créer une règle personnalisée pour autoriser la communication réseau des conteneurs :
