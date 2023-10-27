@@ -1,3 +1,150 @@
+Pour atteindre un serveur SSH via HTTPS sur le port 443, vous pouvez utiliser un outil appelé SSH over HTTPS (ou SSH over SSL), qui encapsule le trafic SSH dans une connexion HTTPS, ce qui peut être utile dans des environnements où le port 22 est bloqué. Voici comment vous pouvez mettre en place cette configuration :
+
+Configuration du serveur SSH :
+
+Assurez-vous que votre serveur SSH (OpenSSH) est configuré pour écouter sur un port différent (par exemple, 2222) dans le fichier de configuration /etc/ssh/sshd_config. Vous pouvez spécifier le port en utilisant l'option Port. Assurez-vous que le serveur SSH est configuré pour autoriser uniquement l'authentification par clé.
+plaintext
+Copy code
+Port 2222
+PasswordAuthentication no
+Redémarrez le service SSH pour appliquer la nouvelle configuration.
+bash
+Copy code
+systemctl restart sshd
+Mise en place d'un tunnel HTTPS :
+
+Pour encapsuler le trafic SSH dans HTTPS, vous pouvez utiliser un outil comme stunnel (Secure Tunnel). Installez stunnel sur votre serveur et configurez-le pour écouter sur le port 443 et rediriger le trafic vers le port SSH.
+
+Voici un exemple de configuration pour stunnel dans /etc/stunnel/stunnel.conf :
+
+plaintext
+Copy code
+[ssh-https]
+accept = 443
+connect = 127.0.0.1:2222
+Cette configuration écoute sur le port 443 en HTTPS et redirige le trafic vers le port SSH (2222) en clair sur la même machine.
+
+Redémarrez le service stunnel pour appliquer la configuration.
+bash
+Copy code
+systemctl restart stunnel
+Accès au serveur via SSH over HTTPS :
+
+Maintenant, vous pouvez vous connecter à votre serveur en utilisant HTTPS sur le port 443. Par exemple, avec curl :
+bash
+Copy code
+curl https://votre-serveur:443 -v --insecure
+Cela encapsule le trafic SSH dans une connexion HTTPS sécurisée.
+
+Assurez-vous de configurer correctement la sécurité HTTPS, y compris l'utilisation de certificats SSL valides, pour protéger votre connexion. Cela permettra d'atteindre votre serveur SSH via HTTPS sur le port 443, même si le port SSH standard est bloqué.
+
+
+
+
+User
+mon serveur openssh est déployé dans un cluster kubernetes et utilise le port 2222... il faudrait donc que j'installe dans la même image docker stunne1 et créer une ingress rule (nginx) pointant sur le service 443
+ChatGPT
+Si votre serveur OpenSSH est déployé dans un cluster Kubernetes et utilise le port 2222, et que vous souhaitez encapsuler le trafic SSH dans une connexion HTTPS en utilisant stunnel, vous pouvez suivre les étapes suivantes :
+
+Créez une image Docker avec stunnel :
+
+Vous devrez créer une image Docker personnalisée qui inclut OpenSSH et stunnel. Vous pouvez utiliser un fichier Dockerfile pour construire cette image. Voici un exemple minimal :
+Dockerfile
+Copy code
+FROM centos:7
+
+# Installez OpenSSH et stunnel
+RUN yum -y install openssh-server stunnel
+
+# Copiez votre configuration SSH et stunnel dans l'image
+COPY sshd_config /etc/ssh/sshd_config
+COPY stunnel.conf /etc/stunnel/stunnel.conf
+
+# Exposez le port SSH
+EXPOSE 2222
+
+# Commande d'entrée
+CMD ["/usr/sbin/sshd", "-D"]
+Assurez-vous d'ajouter votre fichier de configuration SSH (sshd_config) et de configuration stunnel (stunnel.conf) dans le même répertoire que votre Dockerfile. Assurez-vous également que votre image Docker inclut un certificat SSL valide pour stunnel.
+
+Construisez l'image Docker :
+
+Utilisez la commande docker build pour construire votre image Docker personnalisée.
+Déployez l'image dans Kubernetes :
+
+Utilisez Kubernetes pour déployer cette image dans votre cluster. Vous pouvez créer une ressource Deployment ou StatefulSet, selon vos besoins.
+Créez une Ingress pour HTTPS :
+
+Créez une règle Ingress pour exposer le service stunnel via HTTPS sur le port 443. Utilisez Nginx Ingress Controller ou un autre contrôleur Ingress compatible avec votre cluster Kubernetes. Par exemple :
+yaml
+Copy code
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ssh-over-https
+spec:
+  rules:
+  - host: ssh.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: stunnel-service
+            port:
+              number: 443
+Assurez-vous de remplacer ssh.example.com par le nom de domaine ou l'adresse IP que vous souhaitez utiliser pour accéder au service SSH via HTTPS.
+
+Appliquez la configuration de l'Ingress :
+
+Utilisez kubectl apply pour appliquer la configuration de l'Ingress à votre cluster Kubernetes.
+Une fois ces étapes terminées, vous pourrez atteindre votre serveur SSH via HTTPS sur le port 443 en utilisant l'Ingress que vous avez configurée. Le trafic SSH sera encapsulé dans une connexion HTTPS sécurisée grâce à stunnel. Assurez-vous de gérer correctement la sécurité, notamment en obtenant un certificat SSL valide pour le service stunnel.
+
+
+
+
+User
+sur un poste client, pour se connecter à se serveur via https:443 quel serait la configuration (.ssh/config)
+ChatGPT
+Pour vous connecter à votre serveur via HTTPS (port 443) à l'aide de la configuration SSH dans le fichier ~/.ssh/config de votre poste client, vous pouvez ajouter une entrée spécifique pour ce serveur. Voici un exemple de configuration :
+
+plaintext
+Copy code
+Host mon-serveur-https
+    HostName ssh.example.com  # Remplacez par votre nom de domaine ou adresse IP
+    Port 443
+    User votre_utilisateur_ssh  # Remplacez par votre nom d'utilisateur SSH
+    ProxyCommand /usr/bin/stunnel4 mon-serveur-https:443  # Assurez-vous que stunnel est installé
+    IdentityFile ~/.ssh/votre_cle_privee  # Remplacez par le chemin de votre clé privée
+Assurez-vous de personnaliser cette configuration en remplaçant les valeurs par les informations spécifiques à votre configuration. Voici ce que fait chaque ligne :
+
+Host mon-serveur-https: Il s'agit d'un alias que vous pouvez utiliser pour vous connecter au serveur via SSH en utilisant ce nom convivial. Remplacez "mon-serveur-https" par le nom que vous souhaitez.
+
+HostName ssh.example.com: Remplacez "ssh.example.com" par le nom de domaine ou l'adresse IP de votre serveur.
+
+Port 443: Spécifie que la connexion SSH doit utiliser le port 443 au lieu du port SSH standard (22).
+
+User votre_utilisateur_ssh: Remplacez "votre_utilisateur_ssh" par votre nom d'utilisateur SSH.
+
+ProxyCommand /usr/bin/stunnel4 mon-serveur-https:443: Cette ligne indique à SSH d'utiliser stunnel pour encapsuler le trafic SSH dans une connexion HTTPS vers le serveur. Assurez-vous que stunnel est installé sur votre poste client et que la configuration d'encapsulation est correcte.
+
+IdentityFile ~/.ssh/votre_cle_privee: Spécifie le chemin de votre clé privée SSH. Assurez-vous que le chemin pointe vers votre clé privée.
+
+Une fois que vous avez ajouté cette configuration dans votre fichier ~/.ssh/config, vous pouvez vous connecter au serveur en utilisant l'alias que vous avez défini. Par exemple :
+
+bash
+Copy code
+ssh mon-serveur-https
+Cela utilisera la configuration que vous avez spécifiée pour se connecter au serveur via HTTPS sur le port 443
+
+
+
+
+
+
+
+
 Pour configurer Podman en tant que service systemd sous RHEL 8 avec le runtime CRUN, le réseau CNI, etc., tout en permettant aux utilisateurs d'utiliser Podman en mode rootless dans leurs profils respectifs, vous devrez effectuer plusieurs étapes de configuration. Voici un guide étape par étape pour accomplir cela :
 
 Installation de Podman et des dépendances :
