@@ -1,3 +1,25 @@
+https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/building_running_and_managing_containers/index
+
+https://developers.redhat.com/blog/2020/09/25/rootless-containers-with-podman-the-basics#example__using_rootless_containers
+
+https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_atomic_host/7/html-single/managing_containers/index#set_up_for_rootless_containers
+
+https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md
+
+https://docs.oracle.com/en/operating-systems/oracle-linux/podman/podman-ConfiguringStorageforPodman.html#podman-install-storage
+
+https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md
+
+
+
+
+
+
+
+
+
+
+
 Pour configurer Podman en mode rootless sous RHEL 8 et définir un fichier storage.conf avec les bonnes options et bonnes pratiques, vous pouvez suivre les étapes ci-dessous :
 
 Assurez-vous que les packages fuse-overlayfs et slirp4netns sont installés. Vous pouvez les installer avec la commande suivante :
