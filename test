@@ -1,3 +1,134 @@
+Pour configurer Podman en mode rootless sous RHEL 8 et définir un fichier storage.conf avec les bonnes options et bonnes pratiques, vous pouvez suivre les étapes ci-dessous :
+
+Assurez-vous que les packages fuse-overlayfs et slirp4netns sont installés. Vous pouvez les installer avec la commande suivante :
+bash
+Copy code
+sudo dnf install fuse-overlayfs slirp4netns
+Créez un répertoire pour stocker les fichiers de configuration de Podman si vous n'en avez pas déjà un. Par exemple :
+bash
+Copy code
+mkdir -p $HOME/.config/containers
+Créez un fichier de configuration storage.conf dans ce répertoire. Vous pouvez utiliser un éditeur de texte de votre choix, par exemple :
+bash
+Copy code
+nano $HOME/.config/containers/storage.conf
+Dans le fichier storage.conf, vous pouvez spécifier les options de stockage. Voici un exemple de configuration avec des options courantes :
+ini
+Copy code
+# storage.conf for rootless Podman
+
+[storage]
+  driver = "overlay"
+  runroot = "$HOME/.local/share/containers/storage/run"
+  graphroot = "$HOME/.local/share/containers/storage"
+  root = "$HOME/.local/share/containers/storage/rootfs"
+  mounts = "$HOME/.local/share/containers/storage/mount"
+  graphdriver = "overlay"
+  runroot = "$HOME/.local/share/containers/storage/run"
+  graphroot = "$HOME/.local/share/containers/storage"
+  state = "$HOME/.local/share/containers/storage/libpod"
+  tmpdir = "/run/user/$(id -u)"
+
+[storage.options]
+  Overlay.mount_program = "fuse-overlayfs"
+  Overlay.mountopt = "nodev,metacopy=on"
+  Overlay.override_kernel_check = "true"
+  VFS.mount_program = "slirp4netns"
+  VFS.mountopt = "context=system_u:object_r:container_file_t:s0:c5,c255"
+
+[storage.cleanup]
+  age = "168h"
+  interval = "24h"
+N'oubliez pas d'adapter les chemins (comme $HOME/.local/share/containers/storage) à votre configuration personnelle si nécessaire. Les options spécifiques à overlay et slirp4netns sont incluses pour une meilleure compatibilité avec le mode rootless. Les valeurs par défaut peuvent également fonctionner pour de nombreuses situations.
+
+Enregistrez et fermez le fichier storage.conf.
+
+Vous pouvez maintenant utiliser Podman en mode rootless avec cette configuration. Assurez-vous que votre utilisateur a les bonnes autorisations pour le répertoire de stockage que vous avez défini dans storage.conf.
+
+Assurez-vous que Podman est correctement configuré en rootless pour votre utilisateur. Vous pouvez tester en exécutant la commande podman info pour vérifier que les informations de stockage reflètent la configuration que vous avez définie dans le fichier storage.conf.
+
+
+
+
+User
+la partie SELinux est activé et enforcé , cela poserait des problèmes ?
+ChatGPT
+Si SELinux est activé et enforcé sur votre système RHEL 8, cela peut en effet poser des problèmes lors de l'utilisation de Podman en mode rootless, en particulier si les étiquettes SELinux ne sont pas correctement configurées. Pour résoudre ces problèmes, vous devez tenir compte de SELinux lors de la configuration de Podman.
+
+Voici quelques étapes pour vous aider à configurer Podman en mode rootless tout en tenant compte de SELinux :
+
+Assurez-vous que les packages fuse-overlayfs et slirp4netns sont installés, comme mentionné précédemment.
+
+Créez votre fichier storage.conf comme indiqué dans la réponse précédente, mais également assurez-vous que les chemins que vous spécifiez dans storage.conf sont conformes à la politique SELinux. Par exemple, si vous utilisez des répertoires sous votre répertoire personnel, assurez-vous qu'ils sont correctement étiquetés.
+
+Assurez-vous que les fichiers et répertoires utilisés par Podman ont les étiquettes SELinux appropriées. Vous pouvez utiliser la commande chcon pour définir ces étiquettes si nécessaire. Par exemple :
+
+bash
+Copy code
+chcon -Rt svirt_sandbox_file_t $HOME/.local/share/containers
+Cela définira les étiquettes SELinux appropriées pour les fichiers stockés dans le répertoire $HOME/.local/share/containers. Assurez-vous d'ajuster cette commande en fonction de votre propre structure de répertoires.
+
+Si vous continuez à rencontrer des problèmes SELinux, envisagez de consulter les journaux SELinux pour des messages d'audit qui peuvent vous aider à comprendre quelles politiques sont enfreintes. Vous pouvez utiliser la commande ausearch ou consulter les journaux SELinux pour des informations détaillées.
+
+Vous pouvez également envisager d'utiliser des outils SELinux tels que setsebool pour définir des options SELinux spécifiques qui peuvent être nécessaires pour votre configuration Podman.
+
+En respectant ces étapes et en veillant à ce que les étiquettes SELinux soient correctement configurées pour les fichiers et répertoires utilisés par Podman, vous devriez pouvoir exécuter Podman en mode rootless sur un système avec SELinux activé et enforcé. Cependant, il est important de noter que la configuration SELinux peut être complexe, et vous devrez peut-être travailler en étroite collaboration avec l'administrateur SELinux de votre système ou rechercher des conseils spécifiques à votre environnement pour résoudre tout problème SELinux spécifique que vous pourriez rencontrer.
+
+
+
+
+User
+parfait je vais m'appuyer sur toutes ces informations pour tester tout cela merci
+ChatGPT
+De rien ! Je suis heureux d'avoir pu vous aider. Si vous avez d'autres questions ou avez besoin de plus d'assistance lors de vos tests, n'hésitez pas à demander. Bonne chance avec votre configuration de Podman en mode rootless sous SELinux, et n'hésitez pas à revenir si vous avez besoin de plus d'aide à l'avenir.
+
+
+
+
+User
+juste une dernière question je n'ai pas trouvé dans mes recherches ... quand je fais un podman build --no-cache (ou docker ou buildah qui est la référence sous rhel 8), j'ai remarqué qu'il y a toujours des layers non purgé et recréé à chaque fois ... même si on fait un docker system prune -f ou podman system reset, les layers (pas de noms ni de labels...) persistent quand on fait docker images
+ChatGPT
+Lorsque vous exécutez docker build, podman build ou buildah bud avec l'option --no-cache, cela signifie que l'image sera reconstruite sans utiliser le cache existant. Cependant, cela ne signifie pas nécessairement que les couches de l'image précédente seront supprimées automatiquement après la construction. Vous devez supprimer l'image précédente manuellement si vous souhaitez libérer de l'espace disque.
+
+Voici comment vous pouvez supprimer l'image précédente après avoir reconstruit avec --no-cache :
+
+Pour Docker :
+
+bash
+Copy code
+docker rmi <nom_de_l'image_précédente>
+Pour Podman :
+
+bash
+Copy code
+podman rmi <nom_de_l'image_précédente>
+Pour Buildah :
+
+bash
+Copy code
+buildah rmi <nom_de_l'image_précédente>
+Après avoir supprimé l'image précédente, vous devriez constater que les couches inutilisées sont supprimées, libérant ainsi de l'espace disque. Le fait de simplement exécuter docker system prune -f ou podman system reset ne supprimera pas automatiquement les couches d'images qui ne sont plus référencées par aucune image.
+
+Assurez-vous de remplacer <nom_de_l'image_précédente> par le nom ou l'ID de l'image que vous souhaitez supprimer. Une fois l'image précédente supprimée, vous devriez voir une utilisation de l'espace disque réduite.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pour atteindre un serveur SSH via HTTPS sur le port 443, vous pouvez utiliser un outil appelé SSH over HTTPS (ou SSH over SSL), qui encapsule le trafic SSH dans une connexion HTTPS, ce qui peut être utile dans des environnements où le port 22 est bloqué. Voici comment vous pouvez mettre en place cette configuration :
 
 Configuration du serveur SSH :
