@@ -14,6 +14,8 @@ https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.
 
 
 
+export KIND_IGNORED_LOGS=".*detected cgroup v1.*"
+kind create cluster
 
 
 
