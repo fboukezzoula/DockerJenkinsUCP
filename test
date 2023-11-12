@@ -46,7 +46,28 @@ Si vous avez d'autres messages d'erreur ou des détails supplémentaires, n'hés
 
 
 
+Les variables d'environnement `$XDG_RUNTIME_DIR` et `$DBUS_SESSION_BUS_ADDRESS` sont généralement définies automatiquement lors de la connexion d'un utilisateur. Cependant, dans le contexte de l'exécution de certaines commandes, il peut arriver que ces variables ne soient pas correctement définies.
 
+Vous pouvez les définir manuellement dans votre session en utilisant les commandes suivantes :
+
+```bash
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
+```
+
+Ces commandes définissent `$XDG_RUNTIME_DIR` sur le répertoire de runtime spécifique à l'utilisateur et `$DBUS_SESSION_BUS_ADDRESS` sur l'adresse du bus de session D-Bus.
+
+Cependant, gardez à l'esprit que cela peut ne résoudre que partiellement le problème. Ces variables sont généralement configurées automatiquement par le système lors de la connexion d'un utilisateur. Si vous constatez que vous devez les définir manuellement à chaque fois, cela peut indiquer un problème plus profond avec la configuration de votre environnement.
+
+Vous pouvez également essayer de vous reconnecter à votre session ou de redémarrer le système pour voir si les variables sont correctement définies après cela.
+
+Assurez-vous également de vérifier les autorisations et les propriétaires des fichiers de sockets D-Bus dans `/run/user/<USER_ID>/bus/`. Les fichiers de sockets doivent appartenir à l'utilisateur concerné et avoir les bonnes autorisations.
+
+```bash
+ls -la /run/user/$(id -u)/bus/
+```
+
+Si le problème persiste après ces étapes, cela peut être lié à une configuration plus spécifique de votre distribution Linux ou à des problèmes de configuration plus complexes. Dans ce cas, consulter la documentation de votre distribution et les forums de support pourrait être utile.
 
 
 
