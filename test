@@ -1,3 +1,5 @@
+https://unix.stackexchange.com/questions/431896/failed-to-get-d-bus-connection-no-such-file-or-directory-xdg-runtime-dir-not
+
 Le message d'erreur "Failed to create bus connection: No such file or directory" peut être lié à un problème de connectivité avec le système de bus de session D-Bus. Cela pourrait potentiellement être la cause du problème que vous rencontrez avec Kind.
 
 Voici quelques suggestions pour résoudre ce problème :
