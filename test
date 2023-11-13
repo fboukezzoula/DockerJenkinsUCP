@@ -549,3 +549,38 @@ Vérifiez que les fichiers de configuration Proxy Auto-Configuration (PAC) sont 
 Si, après avoir suivi ces étapes, vous rencontrez toujours des problèmes pour construire des images avec Podman via le proxy, vous pouvez également consulter les journaux de Podman (journalctl -u podman.service) pour des informations plus détaillées sur les erreurs rencontrées.
 
 Enfin, assurez-vous que vous avez les droits d'accès appropriés pour utiliser le proxy, car certaines politiques d'entreprise peuvent restreindre l'accès aux proxies. Si vous rencontrez des problèmes persistants, il peut être utile de travailler en étroite collaboration avec le service informatique de votre entreprise pour résoudre ces problèmes.
+
+
+
+
+
+Pour exclure certains utilisateurs de l'exécution d'un script Bash situé dans le répertoire `/etc/profile.d/`, vous pouvez ajouter une condition dans votre script pour vérifier le nom de l'utilisateur avant d'exécuter le reste du script. Voici un exemple de ce que cela pourrait ressembler :
+
+```bash
+#!/bin/bash
+
+# Récupérer le nom de l'utilisateur actuel
+current_user=$(whoami)
+
+# Liste des utilisateurs exclus
+excluded_users=("root" "clouduser")
+
+# Vérifier si l'utilisateur actuel est dans la liste des exclusions
+if [[ " ${excluded_users[@]} " =~ " ${current_user} " ]]; then
+    echo "Le script ne s'exécutera pas pour l'utilisateur $current_user."
+else
+    # Mettez ici le reste de votre script
+    echo "Le script s'exécute pour l'utilisateur $current_user."
+    # Ajoutez vos commandes ici
+fi
+```
+
+Dans cet exemple, le script récupère le nom de l'utilisateur actuel à l'aide de la commande `whoami`. Ensuite, il vérifie si cet utilisateur est dans la liste des utilisateurs exclus. Si c'est le cas, le script affiche un message indiquant que le script ne s'exécutera pas pour cet utilisateur. Sinon, le reste du script est exécuté.
+
+Assurez-vous de rendre le script exécutable avec la commande suivante :
+
+```bash
+sudo chmod +x /etc/profile.d/myscript.sh
+```
+
+Notez que cela empêchera le script de s'exécuter pour les utilisateurs spécifiés lorsqu'ils se connectent, mais cela ne les empêchera pas d'exécuter le script manuellement s'ils ont les permissions nécessaires. Si vous avez besoin d'une solution plus robuste, des solutions telles que les droits d'accès appropriés sur le fichier ou l'utilisation de sudo peuvent également être envisagées.
