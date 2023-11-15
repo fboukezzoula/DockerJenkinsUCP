@@ -20,7 +20,34 @@
 
 
 
+# Nom du fichier
+$fichier = "monfichier.txt"
 
+# Nombre de lignes par bloc
+$lignesParBloc = 20
+
+# Lire le fichier en blocs de lignes
+Get-Content -Path $fichier -ReadCount $lignesParBloc | ForEach-Object -Parallel {
+    param($block)
+
+    # Fonction pour traiter un bloc de lignes
+    function Traiter-Bloc {
+        param($lines)
+
+        foreach ($ligne in $lines) {
+            # Exécuter votre commande pour chaque ligne
+            # Remplacez la ligne suivante par votre propre commande
+            Write-Output "Traitement de la ligne : $ligne"
+            # Votre commande ici
+        }
+    }
+
+    # Appeler la fonction pour traiter le bloc en parallèle
+    Traiter-Bloc -lines $block
+} -ThrottleLimit 5  # Limite du nombre de threads en parallèle
+
+# Attendre la fin de tous les threads parallèles
+Wait-Parallel
 
 
 
