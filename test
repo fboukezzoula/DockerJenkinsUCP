@@ -45,12 +45,13 @@ traiter_bloc() {
 
 # Lecture du fichier en blocs de lignes
 while IFS= read -r -N "$((lignes_par_bloc * (2**20)))" bloc; do
-    # Démarrer le traitement en arrière-plan
-    echo "$bloc" | traiter_bloc &
+    # Démarrer le traitement en arrière-plan avec redirection de la sortie
+    echo "$bloc" | traiter_bloc > /dev/null 2>&1 &
 done < "$fichier"
 
 # Attendre que tous les processus en arrière-plan se terminent
 wait
+
 
 
 
