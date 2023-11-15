@@ -1,3 +1,63 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#!/bin/bash
+
+# Nom du fichier
+fichier="monfichier.txt"
+
+# Nombre de lignes par bloc
+lignes_par_bloc=20
+
+# Fonction pour traiter un bloc de lignes
+traiter_bloc() {
+    while IFS= read -r ligne; do
+        # Exécuter votre commande pour chaque ligne
+        # Remplacez la ligne suivante par votre propre commande
+        echo "Traitement de la ligne : $ligne"
+        # Votre commande ici
+    done
+}
+
+# Lecture du fichier en blocs de lignes
+while IFS= read -r -N "$((lignes_par_bloc * (2**20)))" bloc; do
+    # Démarrer le traitement en arrière-plan
+    echo "$bloc" | traiter_bloc &
+done < "$fichier"
+
+# Attendre que tous les processus en arrière-plan se terminent
+wait
+
+
+
+
+
+
+
 https://unix.stackexchange.com/questions/431896/failed-to-get-d-bus-connection-no-such-file-or-directory-xdg-runtime-dir-not
 
 Le message d'erreur "Failed to create bus connection: No such file or directory" peut être lié à un problème de connectivité avec le système de bus de session D-Bus. Cela pourrait potentiellement être la cause du problème que vous rencontrez avec Kind.
