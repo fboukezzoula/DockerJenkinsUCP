@@ -24,7 +24,11 @@ Copy code
 -A INPUT -p udp --dport 8301 -s CIDR_BLOCK -j DROP
 COMMIT
 Appliquer les règles Iptables:
+sudo iptables-restore < /etc/sysconfig/iptables-config
+
+
 Appliquez les règles définies dans le fichier de configuration.
+service iptables save
 
 bash
 Copy code
@@ -41,6 +45,8 @@ Redémarrez le service Iptables pour appliquer les modifications.
 bash
 Copy code
 sudo service iptables restart
+
+service iptables restart
 Assurez-vous de remplacer CIDR_BLOCK par votre plage d'adresses IP réelle, et ajustez les règles en conséquence. Avant d'appliquer ces règles, assurez-vous de ne pas vous bloquer vous-même en ajoutant une règle permettant votre propre accès au port si nécessaire.
 
 
