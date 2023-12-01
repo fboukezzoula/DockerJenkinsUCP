@@ -1,3 +1,18 @@
+sudo firewall-cmd --permanent --new-service=my-service
+sudo firewall-cmd --permanent --service=my-service --set-short="My Service"
+sudo firewall-cmd --permanent --service=my-service --set-description="Custom service for port 8301"
+sudo firewall-cmd --permanent --service=my-service --add-port=8301/tcp
+sudo firewall-cmd --permanent --service=my-service --add-port=8301/udp
+
+
+sudo firewall-cmd --permanent --zone=public --add-rich-rule='rule family="ipv4" source address="CIDR_BLOCK" port port="8301" protocol="tcp" reject'
+sudo firewall-cmd --permanent --zone=public --add-rich-rule='rule family="ipv4" source address="CIDR_BLOCK" port port="8301" protocol="udp" reject'
+
+sudo firewall-cmd --reload
+
+
+
+
 Pour bloquer le trafic vers un CIDR spécifique sur le port 8301 en TCP et UDP à l'aide d'Iptables sous RHEL 9, vous pouvez suivre ces étapes. Assurez-vous d'avoir les droits d'administration pour effectuer ces changements.
 
 Vérification de l'installation d'Iptables:
