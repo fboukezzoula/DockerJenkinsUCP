@@ -1,4 +1,47 @@
+Pour bloquer le trafic vers un CIDR spécifique sur le port 8301 en TCP et UDP à l'aide d'Iptables sous RHEL 9, vous pouvez suivre ces étapes. Assurez-vous d'avoir les droits d'administration pour effectuer ces changements.
 
+Vérification de l'installation d'Iptables:
+Assurez-vous que le package iptables est installé sur votre système.
+
+bash
+Copy code
+sudo dnf install iptables-services
+Configuration des règles Iptables:
+Créez un fichier pour définir vos règles Iptables. Par exemple, /etc/sysconfig/iptables-config.
+
+bash
+Copy code
+sudo nano /etc/sysconfig/iptables-config
+Ajoutez les lignes suivantes pour permettre le trafic sur le port 8301 en TCP et UDP uniquement à partir du CIDR spécifié. Remplacez CIDR_BLOCK par votre CIDR réel.
+
+plaintext
+Copy code
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -p tcp --dport 8301 -s CIDR_BLOCK -j DROP
+-A INPUT -p udp --dport 8301 -s CIDR_BLOCK -j DROP
+COMMIT
+Appliquer les règles Iptables:
+Appliquez les règles définies dans le fichier de configuration.
+
+bash
+Copy code
+sudo iptables-restore < /etc/sysconfig/iptables-config
+Sauvegarde des règles Iptables:
+Pour que les règles soient persistantes après le redémarrage, vous devez sauvegarder les règles Iptables.
+
+bash
+Copy code
+sudo service iptables save
+Redémarrage du service Iptables:
+Redémarrez le service Iptables pour appliquer les modifications.
+
+bash
+Copy code
+sudo service iptables restart
+Assurez-vous de remplacer CIDR_BLOCK par votre plage d'adresses IP réelle, et ajustez les règles en conséquence. Avant d'appliquer ces règles, assurez-vous de ne pas vous bloquer vous-même en ajoutant une règle permettant votre propre accès au port si nécessaire.
 
 
 Install-Module -Name PSThreadJob -Force -SkipPublisherCheck
