@@ -1,3 +1,25 @@
+You can use iptables command to do the needful, here are some examples:-
+
+Type the following command as root:
+
+# iptables -L -n -v
+
+#iptables -L INPUT -n -v > list input chain rules
+
+## iptables -P INPUT DROP > Block incoming traffic
+# iptables -P OUTPUT DROP > Block output traffic
+# iptables -P FORWARD DROP > Block forward chain
+# iptables -L -v -n > List your implemented rules
+
+
+
+
+
+
+
+
+
+
 sudo firewall-cmd --permanent --new-service=my-service
 sudo firewall-cmd --permanent --service=my-service --set-short="My Service"
 sudo firewall-cmd --permanent --service=my-service --set-description="Custom service for port 8301"
