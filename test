@@ -1,3 +1,19 @@
+#!/bin/bash
+
+# Variable KIND_CONTAINER
+KIND_CONTAINER="--publish=127.0.0.1:44605:6443/tcp"
+
+# Extraire l'adresse IP et le port de KIND_CONTAINER
+IP_PORT=$(echo $KIND_CONTAINER | cut -d':' -f2,3 | cut -d'/' -f1)
+SERVER_URL="https://${IP_PORT}"
+
+# Mettre à jour le fichier .kube/config
+sed -i "s#\(server: https://\)[:0-9]\+#\1${IP_PORT}#" ~/.kube/config
+
+echo "Fichier .kube/config mis à jour avec :"
+echo "server: $SERVER_URL"
+
+
 You can use iptables command to do the needful, here are some examples:-
 
 Type the following command as root:
