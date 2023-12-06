@@ -1,3 +1,67 @@
+Exemple d'exposition de port dans une définition de Pod YAML :
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: mycontainer
+    image: myimage
+    ports:
+    - containerPort: 8080
+
+Vérifiez l'IP du conteneur :
+Obtenez l'adresse IP du conteneur en utilisant la commande podman pod inspect ou podman inspect.
+
+Exemple :
+podman inspect -f "{{.NetworkSettings.IPAddress}}" <container-id>
+
+ip addr show cni-podman0
+
+iptables -L -n
+
+iptables -P OUTPUT ACCEPT
+
+
+curl -v telnet://<IP-du-conteneur>:<PORT>
+
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: mycontainer
+    image: your-image
+    ports:
+    - containerPort: 8080
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+spec:
+  selector:
+    app: mypod
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: ClusterIP
+
+
+
+kubectl get pod mypod -o=jsonpath='{.status.podIP}'
+
+
+curl -v telnet://<IP-du-conteneur>:<PORT-du-Service>
+
+
+
 # Exemple : Créez un ConfigMap avec les serveurs DNS
 kubectl create configmap kube-dns --from-file=/etc/resolv.conf
 
