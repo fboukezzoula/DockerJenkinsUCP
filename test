@@ -1,3 +1,56 @@
+Lorsque vous utilisez Kind avec Podman en mode rootless, la création d'un service de type LoadBalancer peut poser des problèmes, car les solutions de LoadBalancer standard peuvent ne pas être directement compatibles avec Podman en mode rootless.
+
+Cependant, une alternative est d'utiliser un service de type NodePort. Un service de type NodePort expose votre service sur un port au niveau de chaque nœud du cluster. Vous pouvez ensuite accéder à votre service depuis le host en utilisant l'adresse IP du nœud et le port NodePort.
+
+Voici comment vous pouvez configurer un service de type NodePort :
+
+Créez un fichier YAML pour le Service, par exemple, service-definition.yaml:
+
+yaml
+Copy code
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+spec:
+  selector:
+    app: mypod
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: NodePort
+Créez le Service dans votre cluster Kind :
+
+bash
+Copy code
+kubectl apply -f service-definition.yaml
+Obtenez le port NodePort assigné :
+
+bash
+Copy code
+kubectl get svc myservice
+Vous verrez un port numérique sous la colonne "PORT(S)".
+
+Obtenez l'adresse IP du nœud du cluster :
+
+bash
+Copy code
+kubectl get nodes -o=jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}'
+Accédez à votre service depuis le host en utilisant l'adresse IP du nœud et le port NodePort :
+
+bash
+Copy code
+curl -v telnet://<IP-du-noeud>:<port-NodePort>
+Assurez-vous de remplacer <IP-du-noeud> par l'adresse IP du nœud obtenue à l'étape 4 et <port-NodePort> par le port NodePort obtenu à l'étape 3.
+
+Cela devrait vous permettre d'accéder à votre service depuis le host en utilisant l'adresse IP du nœud et le port NodePort.
+
+
+
+
+
+
 Exemple d'exposition de port dans une définition de Pod YAML :
 
 apiVersion: v1
