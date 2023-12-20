@@ -1,3 +1,22 @@
+#!/bin/bash
+
+# Variable KIND_CONTAINER
+KIND_CONTAINER="--publish=127.0.0.1:44605:6443/tcp,"
+
+# Extraire l'adresse IP et le port de KIND_CONTAINER
+IP_PORT=$(echo $KIND_CONTAINER | sed -n 's/.*--publish=\([^:]*\):\(.*\):6443\/tcp.*/\1:\2/p')
+SERVER_URL="https://${IP_PORT}"
+
+# Mettre à jour le fichier .kube/config
+sed -i "s#\(server: https://\)[:0-9]\+#\1${IP_PORT}#" ~/.kube/config
+
+echo "Fichier .kube/config mis à jour avec :"
+echo "server: $SERVER_URL"
+
+
+
+
+
 Lorsque vous utilisez Kind avec Podman en mode rootless, la création d'un service de type LoadBalancer peut poser des problèmes, car les solutions de LoadBalancer standard peuvent ne pas être directement compatibles avec Podman en mode rootless.
 
 Cependant, une alternative est d'utiliser un service de type NodePort. Un service de type NodePort expose votre service sur un port au niveau de chaque nœud du cluster. Vous pouvez ensuite accéder à votre service depuis le host en utilisant l'adresse IP du nœud et le port NodePort.
