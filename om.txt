@@ -1,3 +1,38 @@
+
+
+#!/bin/bash
+
+NAMESPACE="votre_namespace"
+MAX_WAIT_SECONDS=60
+SLEEP_INTERVAL=5
+
+start_time=$(date +%s)
+current_time=$(date +%s)
+
+while [ $((current_time - start_time)) -lt $MAX_WAIT_SECONDS ]; do
+    # Vérifier le statut de tous les pods dans le namespace
+    if kubectl get pods -n $NAMESPACE | grep -q -v -E 'STATUS|Running'; then
+        echo "Certains pods ne sont pas en état 'Running'. Attendez..."
+    else
+        echo "Tous les pods sont en état 'Running'. Sortie de la boucle."
+        break
+    fi
+
+    sleep $SLEEP_INTERVAL
+    current_time=$(date +%s)
+done
+
+if [ $((current_time - start_time)) -ge $MAX_WAIT_SECONDS ]; then
+    echo "Le délai maximum de 60 secondes est écoulé. Sortie de la boucle."
+fi
+
+
+
+
+
+
+
+
 L'erreur "Connection refused" indique généralement qu'il y a un problème de connectivité vers l'hôte ou le port spécifié. Voici quelques étapes pour dépanner cette erreur :
 
 Vérifiez la connectivité réseau : Assurez-vous que vous avez une connectivité réseau vers l'hôte grcode-dev1 et que le port 4443 est ouvert et accessible depuis votre poste client. Vous pouvez essayer de pinguer l'hôte ou d'utiliser la commande telnet ou nc pour vérifier la connectivité.
