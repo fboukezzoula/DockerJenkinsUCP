@@ -1,4 +1,29 @@
+rovider "azurerm" {
+  subscription_id = "votre_id_d'abonnement"
+  client_id       = "votre_id_de_client_spn"
+  client_secret   = "votre_secret_spn"
+  tenant_id       = "votre_id_tenant"
+}
 
+resource "azurerm_key_vault_secret" "example" {
+  name         = "example-secret"
+  value        = "votre_valeur_de_secret"
+  key_vault_id = azurerm_key_vault.example.id
+}
+
+resource "azurerm_virtual_machine" "example" {
+  name                  = "example-vm"
+  resource_group_name   = "votre_groupe_de_ressources"
+  location              = "votre_region"
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      #!/bin/bash
+      secret_value=$(az keyvault secret show --vault-name votre-keyvault --name votre-secret --query value -o tsv)
+      echo "export SECRET_VARIABLE=\$secret_value" >> /etc/environment
+    EOT
+  }
+}
 
 #!/bin/bash
 
