@@ -1,4 +1,671 @@
-rovider "azurerm" {
+Pour se connecter à Azure Key Vault avec un Service Principal (SPN) lors du provisionnement d'une machine virtuelle (VM) dans Azure à l'aide de Terraform, vous pouvez utiliser la ressource azurerm_virtual_machine_extension pour exécuter un script personnalisé (cloud-init) sur la VM. Voici un exemple de code Terraform qui montre comment accomplir cela :
+
+provider "azurerm" {
+  features = {}
+}
+
+resource "azurerm_resource_group" "example" {
+  name     = "example-resource-group"
+  location = "East US"
+}
+
+resource "azurerm_virtual_network" "example" {
+  name                = "example-vnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+}
+
+resource "azurerm_subnet" "example" {
+  name                 = "example-subnet"
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+resource "azurerm_network_interface" "example" {
+  name                = "example-nic"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+resource "azurerm_virtual_machine" "example" {
+  name                  = "example-vm"
+  location              = azurerm_resource_group.example.location
+  resource_group_name   = azurerm_resource_group.example.name
+  network_interface_ids = [azurerm_network_interface.example.id]
+  vm_size               = "Standard_DS1_v2"
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  storage_os_disk {
+    name              = "example-osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  os_profile {
+    computer_name  = "example-vm"
+    admin_username = "adminuser"
+
+    admin_ssh_key {
+      username   = "adminuser"
+      public_key = file("~/.ssh/id_rsa.pub")
+    }
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = true
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "example" {
+  name                 = "customScript"
+  virtual_machine_id   = azurerm_virtual_machine.example.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  settings = <<SETTINGS
+    {
+        "script": "./setup-keyvault.sh"
+    }
+SETTINGS
+
+  protected_settings = <<PROTECTED_SETTINGS
+    {
+        "commandToExecute": "./setup-keyvault.sh"
+    }
+PROTECTED_SETTINGS
+}
+
+
+Dans cet exemple, le script setup-keyvault.sh contiendrait le code nécessaire pour se connecter à Azure Key Vault avec le SPN et effectuer les opérations souhaitées. Assurez-vous de remplacer les valeurs factices par les vôtres, comme les noms de ressources, les clés publiques SSH, etc.
+
+Le script setup-keyvault.sh pourrait ressembler à quelque chose comme ceci :
+
+#!/bin/bash
+
+# Variables
+key_vault_uri="https://<votre-nom-de-keyvault>.vault.azure.net/"
+client_id="<votre-client-id>"
+client_secret="<votre-client-secret>"
+tenant_id="<votre-tenant-id>"
+
+# Installation du client Azure CLI
+apt-get update
+apt-get install -y azure-cli
+
+# Authentification avec le SPN
+az login --service-principal -u $client_id -p $client_secret --tenant $tenant_id
+
+# Exemple d'opération avec Azure Key Vault (remplacez cela par vos propres opérations)
+az keyvault secret list --vault-name $key_vault_uri
+
+
+
+
+User
+est-ce possible de ne pas  passer par l'éxécution d'un script bash linux mais de se connecter au key vault azure avec un spn et de créer des variables d'environnements se basant sur des clés/valeurs présents dans ce key vault 
+
+Oui, il est possible de se connecter à Azure Key Vault avec un Service Principal (SPN) et de récupérer des secrets directement dans le cloud-init, sans avoir besoin d'exécuter un script bash. Vous pouvez utiliser le module azurerm_virtual_machine_extension de Terraform pour définir le cloud-init de la VM.
+
+Voici un exemple de code Terraform qui illustre comment le faire :
+
+
+provider "azurerm" {
+  features = {}
+}
+
+resource "azurerm_resource_group" "example" {
+  name     = "example-resource-group"
+  location = "East US"
+}
+
+resource "azurerm_virtual_network" "example" {
+  name                = "example-vnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+}
+
+resource "azurerm_subnet" "example" {
+  name                 = "example-subnet"
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+resource "azurerm_network_interface" "example" {
+  name                = "example-nic"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+resource "azurerm_virtual_machine" "example" {
+  name                  = "example-vm"
+  location              = azurerm_resource_group.example.location
+  resource_group_name   = azurerm_resource_group.example.name
+  network_interface_ids = [azurerm_network_interface.example.id]
+  vm_size               = "Standard_DS1_v2"
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  storage_os_disk {
+    name              = "example-osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  os_profile {
+    computer_name  = "example-vm"
+    admin_username = "adminuser"
+
+    admin_ssh_key {
+      username   = "adminuser"
+      public_key = file("~/.ssh/id_rsa.pub")
+    }
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = true
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "example" {
+  name                 = "setupKeyVault"
+  virtual_machine_id   = azurerm_virtual_machine.example.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  settings = <<SETTINGS
+    {
+        "script": "#!/bin/bash
+                   # Install Azure CLI
+                   apt-get update
+                   apt-get install -y azure-cli
+
+                   # Authenticate with SPN and set environment variables
+                   az login --service-principal -u ${var.client_id} -p ${var.client_secret} --tenant ${var.tenant_id}
+                   export SECRET_VALUE=\$(az keyvault secret show --vault-name ${var.key_vault_name} --name ${var.secret_name} --query value -o tsv)
+
+                   # Set environment variables
+                   echo "export SECRET_VALUE=\$SECRET_VALUE" >> /etc/environment
+                   "
+    }
+SETTINGS
+}
+
+
+Dans cet exemple, vous devez définir les variables Terraform suivantes dans votre fichier principal :
+
+client_id: ID du client (SPN) Azure.
+client_secret: Secret du client (SPN) Azure.
+tenant_id: ID du locataire Azure.
+key_vault_name: Nom de votre Azure Key Vault.
+secret_name: Nom du secret que vous souhaitez récupérer.
+Cela va directement définir une variable d'environnement dans le fichier /etc/environment de la VM à partir du secret récupéré depuis Azure Key Vault. N'oubliez pas de remplacer les valeurs factices par les vôtres.
+
+
+
+
+
+
+Compris, vous souhaitez éviter l'utilisation de la CustomScriptExtension et vous connecter directement au Key Vault en utilisant Terraform et le SPN. Pour cela, vous pouvez utiliser la ressource azurerm_key_vault_access_policy pour définir les stratégies d'accès au Key Vault et accorder les autorisations nécessaires au SPN. Ensuite, vous pouvez utiliser la ressource azurerm_virtual_machine_extension pour exécuter un script cloud-init directement sur la machine virtuelle (VM) pour récupérer les secrets du Key Vault.
+
+provider "azurerm" {
+  features = {}
+}
+
+resource "azurerm_resource_group" "example" {
+  name     = "example-resource-group"
+  location = "East US"
+}
+
+resource "azurerm_key_vault" "example" {
+  name                        = "example-key-vault"
+  resource_group_name         = azurerm_resource_group.example.name
+  location                    = azurerm_resource_group.example.location
+  enabled_for_disk_encryption = false
+  enabled_for_deployment      = false
+  enabled_for_template_deployment = false
+  tenant_id                   = var.tenant_id
+
+  sku {
+    family = "A"
+    name   = "standard"
+  }
+
+  access_policy {
+    tenant_id = var.tenant_id
+    object_id = var.client_id
+
+    secret_permissions = [
+      "get",
+    ]
+  }
+}
+
+resource "azurerm_virtual_network" "example" {
+  name                = "example-vnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+}
+
+resource "azurerm_subnet" "example" {
+  name                 = "example-subnet"
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+resource "azurerm_network_interface" "example" {
+  name                = "example-nic"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+resource "azurerm_virtual_machine" "example" {
+  name                  = "example-vm"
+  location              = azurerm_resource_group.example.location
+  resource_group_name   = azurerm_resource_group.example.name
+  network_interface_ids = [azurerm_network_interface.example.id]
+  vm_size               = "Standard_DS1_v2"
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  storage_os_disk {
+    name              = "example-osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  os_profile {
+    computer_name  = "example-vm"
+    admin_username = "adminuser"
+
+    admin_ssh_key {
+      username   = "adminuser"
+      public_key = file("~/.ssh/id_rsa.pub")
+    }
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = true
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "example" {
+  name                 = "setupKeyVault"
+  virtual_machine_id   = azurerm_virtual_machine.example.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptForLinux"
+  type_handler_version = "1.10"
+
+  settings = <<SETTINGS
+    {
+        "script": "#!/bin/bash
+                   # Install Azure CLI
+                   apt-get update
+                   apt-get install -y azure-cli
+
+                   # Authenticate with SPN and retrieve secret from Key Vault
+                   az login --service-principal -u ${var.client_id} -p ${var.client_secret} --tenant ${var.tenant_id}
+                   export SECRET_VALUE=\$(az keyvault secret show --vault-name ${azurerm_key_vault.example.name} --name <your-secret-name> --query value -o tsv)
+
+                   # Set environment variable
+                   echo 'export SECRET_VALUE=\$SECRET_VALUE' >> /etc/environment
+                   "
+    }
+SETTINGS
+}
+
+Dans cet exemple, les modifications principales incluent l'ajout de la ressource azurerm_key_vault_access_policy pour définir la politique d'accès au Key Vault, en accordant les autorisations nécessaires au SPN. Le script cloud-init dans la ressource azurerm_virtual_machine_extension est également mis à jour pour inclure la récupération du secret du Key Vault.
+
+N'oubliez pas de remplacer <your-secret-name> par le nom réel du secret que vous souhaitez récupérer du Key Vault. De plus, assurez-vous que votre machine virtuelle dispose du module CustomScriptForLinux installé. Le script cloud-init fourni suppose que la machine virtuelle utilise un système d'exploitation basé sur Linux.
+
+Notez que vous devrez également adapter cette approche en fonction de vos besoins spécifiques et des autorisations requises pour votre SPN dans le Key Vault.
+
+
+
+
+Si votre Azure Key Vault est déjà créé, vous pouvez configurer la machine virtuelle pour récupérer les informations d'authentification (telles que les clés et les secrets) directement à partir du Key Vault pendant le processus de provisionnement. Pour ce faire, vous pouvez utiliser l'extension MSI (Managed Service Identity) sur la machine virtuelle, qui permet à la VM de s'authentifier auprès d'Azure Active Directory sans avoir à gérer explicitement des clés d'authentification.
+
+Voici un exemple de code Terraform pour illustrer cela :
+
+provider "azurerm" {
+  features = {}
+}
+
+resource "azurerm_resource_group" "example" {
+  name     = "example-resource-group"
+  location = "East US"
+}
+
+resource "azurerm_key_vault" "example" {
+  name                        = "example-key-vault"
+  resource_group_name         = azurerm_resource_group.example.name
+  location                    = azurerm_resource_group.example.location
+  enabled_for_disk_encryption = false
+  enabled_for_deployment      = false
+  enabled_for_template_deployment = false
+  tenant_id                   = var.tenant_id
+
+  sku {
+    family = "A"
+    name   = "standard"
+  }
+
+  access_policy {
+    tenant_id = var.tenant_id
+    object_id = var.client_id
+
+    secret_permissions = [
+      "get",
+    ]
+  }
+}
+
+resource "azurerm_virtual_network" "example" {
+  name                = "example-vnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+}
+
+resource "azurerm_subnet" "example" {
+  name                 = "example-subnet"
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+resource "azurerm_network_interface" "example" {
+  name                = "example-nic"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+resource "azurerm_virtual_machine" "example" {
+  name                  = "example-vm"
+  location              = azurerm_resource_group.example.location
+  resource_group_name   = azurerm_resource_group.example.name
+  network_interface_ids = [azurerm_network_interface.example.id]
+  vm_size               = "Standard_DS1_v2"
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  storage_os_disk {
+    name              = "example-osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  os_profile {
+    computer_name  = "example-vm"
+    admin_username = "adminuser"
+
+    admin_ssh_key {
+      username   = "adminuser"
+      public_key = file("~/.ssh/id_rsa.pub")
+    }
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = true
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "example" {
+  name                 = "setupKeyVault"
+  virtual_machine_id   = azurerm_virtual_machine.example.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptForLinux"
+  type_handler_version = "1.10"
+
+  settings = <<SETTINGS
+    {
+        "script": "#!/bin/bash
+                   # Install Azure CLI
+                   apt-get update
+                   apt-get install -y azure-cli
+
+                   # Authenticate using MSI
+                   export MSI_ENDPOINT=$(curl -sS --retry 5 --retry-max-time 10 -H Metadata:true "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net" | jq -r .access_token)
+
+                   # Retrieve secret from Key Vault
+                   export SECRET_VALUE=\$(az keyvault secret show --vault-name ${azurerm_key_vault.example.name} --name <your-secret-name> --query value -o tsv)
+
+                   # Set environment variable
+                   echo 'export SECRET_VALUE=\$SECRET_VALUE' >> /etc/environment
+                   "
+    }
+SETTINGS
+}
+
+Dans cet exemple, l'extension cloud-init utilise l'authentification MSI pour la machine virtuelle. Elle récupère ensuite le secret du Key Vault et le définit comme une variable d'environnement sur la machine virtuelle.
+
+N'oubliez pas de remplacer <your-secret-name> par le nom réel du secret que vous souhaitez récupérer du Key Vault.
+
+Notez que l'authentification MSI doit être activée sur la machine virtuelle et la machine virtuelle doit disposer des autorisations nécessaires sur le Key Vault. Vous pouvez ajuster les autorisations dans la politique d'accès du Key Vault via la ressource azurerm_key_vault_access_policy.
+
+
+
+
+Oui, vous pouvez sécuriser les données de connexion à la VM en stockant les informations sensibles, telles que le nom d'utilisateur et la clé publique SSH, dans Azure Key Vault plutôt que de les inclure directement dans le code Terraform ou dans le cloud-init. Cela renforce la sécurité en évitant d'exposer ces informations sensibles dans les fichiers de configuration.
+
+Voici comment vous pourriez adapter votre code Terraform pour réaliser cela :
+provider "azurerm" {
+  features = {}
+}
+
+resource "azurerm_resource_group" "example" {
+  name     = "example-resource-group"
+  location = "East US"
+}
+
+resource "azurerm_key_vault" "example" {
+  name                        = "example-key-vault"
+  resource_group_name         = azurerm_resource_group.example.name
+  location                    = azurerm_resource_group.example.location
+  enabled_for_disk_encryption = false
+  enabled_for_deployment      = false
+  enabled_for_template_deployment = false
+  tenant_id                   = var.tenant_id
+
+  sku {
+    family = "A"
+    name   = "standard"
+  }
+
+  access_policy {
+    tenant_id = var.tenant_id
+    object_id = var.client_id
+
+    secret_permissions = [
+      "get",
+    ]
+  }
+}
+
+resource "azurerm_virtual_network" "example" {
+  name                = "example-vnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+}
+
+resource "azurerm_subnet" "example" {
+  name                 = "example-subnet"
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+resource "azurerm_network_interface" "example" {
+  name                = "example-nic"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+resource "azurerm_virtual_machine" "example" {
+  name                  = "example-vm"
+  location              = azurerm_resource_group.example.location
+  resource_group_name   = azurerm_resource_group.example.name
+  network_interface_ids = [azurerm_network_interface.example.id]
+  vm_size               = "Standard_DS1_v2"
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  storage_os_disk {
+    name              = "example-osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  os_profile {
+    computer_name  = "example-vm"
+    admin_username = "adminuser"
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = true
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "example" {
+  name                 = "setupKeyVault"
+  virtual_machine_id   = azurerm_virtual_machine.example.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptForLinux"
+  type_handler_version = "1.10"
+
+  settings = <<SETTINGS
+    {
+        "script": "#!/bin/bash
+                   # Install Azure CLI
+                   apt-get update
+                   apt-get install -y azure-cli
+
+                   # Authenticate using MSI
+                   export MSI_ENDPOINT=$(curl -sS --retry 5 --retry-max-time 10 -H Metadata:true 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net' | jq -r .access_token)
+
+                   # Retrieve username and SSH public key from Key Vault
+                   export ADMIN_USERNAME=\$(az keyvault secret show --vault-name ${azurerm_key_vault.example.name} --name admin-username --query value -o tsv)
+                   export SSH_PUBLIC_KEY=\$(az keyvault secret show --vault-name ${azurerm_key_vault.example.name} --name ssh-public-key --query value -o tsv)
+
+                   # Set OS profile values
+                   sudo usermod -l \$ADMIN_USERNAME adminuser
+                   sudo usermod -aG sudo \$ADMIN_USERNAME
+                   echo '\$ADMIN_USERNAME ALL=(ALL:ALL) ALL' | sudo EDITOR='tee -a' visudo
+                   echo '\$SSH_PUBLIC_KEY' | sudo tee -a /home/\$ADMIN_USERNAME/.ssh/authorized_keys
+                   sudo chown -R \$ADMIN_USERNAME:\$ADMIN_USERNAME /home/\$ADMIN_USERNAME/.ssh
+                   sudo chmod 600 /home/\$ADMIN_USERNAME/.ssh/authorized_keys
+                   sudo chmod 700 /home/\$ADMIN_USERNAME/.ssh
+                   "
+    }
+SETTINGS
+}
+
+Dans cet exemple, le nom d'utilisateur et la clé publique SSH sont stockés comme secrets dans Azure Key Vault (admin-username et ssh-public-key). Le script cloud-init utilise ces valeurs pour configurer le profil OS de la machine virtuelle pendant le provisionnement. Assurez-vous que les secrets sont correctement configurés dans votre Key Vault.
+
+Cette approche permet de maintenir la sécurité des informations sensibles en les stockant dans Azure Key Vault plutôt que dans le code Terraform.
+
+
+
+
+
+
+
+
+***********************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+provider "azurerm" {
   subscription_id = "votre_id_d'abonnement"
   client_id       = "votre_id_de_client_spn"
   client_secret   = "votre_secret_spn"
