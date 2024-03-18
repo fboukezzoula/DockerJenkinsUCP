@@ -1,3 +1,82 @@
+Pour rendre les règles iptables persistantes sur Red Hat 9, vous pouvez utiliser iptables-save et iptables-restore avec un script d'initialisation. Voici comment procéder :
+
+Sauvegardez vos règles iptables actuelles dans un fichier :
+bash
+Copy code
+iptables-save > /etc/sysconfig/iptables
+Créez un script pour restaurer les règles au démarrage. Vous pouvez créer un fichier tel que /etc/init.d/iptables avec le contenu suivant :
+bash
+Copy code
+#!/bin/sh
+#
+# iptables   Start iptables firewall
+#
+# chkconfig: 2345 95 05
+# description:  Activates/Deactivates IPtables firewall.
+# 
+
+# Source function library.
+. /etc/init.d/functions
+
+start() {
+        echo -n "Starting iptables services: "
+        /sbin/iptables-restore < /etc/sysconfig/iptables
+        echo
+        touch /var/lock/subsys/iptables
+        return 0
+}
+
+stop() {
+        echo -n "Shutting down iptables services: "
+        /sbin/iptables-save > /etc/sysconfig/iptables
+        /sbin/iptables -F
+        echo
+        rm -f /var/lock/subsys/iptables
+        return 0
+}
+
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart)
+        stop
+        start
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        ;;
+esac
+
+exit 0
+Assurez-vous que le script est exécutable :
+
+bash
+Copy code
+chmod +x /etc/init.d/iptables
+Activez le script pour qu'il soit exécuté au démarrage :
+bash
+Copy code
+chkconfig --add iptables
+chkconfig iptables on
+Vous pouvez désormais démarrer, arrêter ou redémarrer iptables avec :
+bash
+Copy code
+service iptables start
+service iptables stop
+service iptables restart
+Avec cette configuration, vos règles iptables seront restaurées automatiquement après un redémarrage du serveur.
+
+
+
+
+
+
+
+
 Tout d'abord, assurez-vous que votre système dispose de la prise en charge du routage des paquets et de la translation d'adresses. Vous pouvez activer le routage des paquets en exécutant :
 
 bash
