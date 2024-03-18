@@ -1,3 +1,37 @@
+
+Créez le fichier vars/main.yaml comme indiqué précédemment.
+Intégrez la commande podman network inspect podman | jq -r '.[0].subnets[0].gateway' dans votre playbook pour récupérer la sortie et l'attribuer à une variable.
+Voici comment vous pouvez modifier votre playbook :
+
+yaml
+Copy code
+---
+- name: Exemple de playbook Ansible
+  hosts: votre_hôte
+  tasks:
+    - name: Exécuter la commande shell et récupérer la sortie
+      command: "podman network inspect podman | jq -r '.[0].subnets[0].gateway'"
+      register: resultat_commande
+
+    - name: Inclure la variable dans vars/main.yaml
+      lineinfile:
+        path: "vars/main.yaml"
+        line: "gateway_variable: '{{ resultat_commande.stdout }}'"
+        create: yes
+
+    - name: Utiliser la variable dans une autre tâche
+      debug:
+        msg: "La gateway est {{ gateway_variable }}"
+Assurez-vous que votre rôle Ansible est bien configuré, et remplacez "votre_hôte" par le nom de votre hôte ou le groupe d'hôtes ciblé.
+
+Cette séquence de tâches exécutera la commande shell, enregistrera la sortie dans la variable resultat_commande, puis écrira cette valeur dans le fichier vars/main.yaml. Vous pourrez ensuite utiliser la variable gateway_variable dans d'autres tâches de votre playbook.
+
+
+
+
+
+
+
 pour définir une variable dans le fichier vars/main.yaml en évaluant une commande shell, vous pouvez utiliser le module command pour exécuter la commande shell lors de la lecture des variables. Voici comment vous pouvez le faire :
 
 Créez un fichier vars/main.yaml dans votre rôle Ansible.
