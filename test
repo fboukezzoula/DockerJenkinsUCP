@@ -1,3 +1,7 @@
+socat TCP-LISTEN:127.0.0.1:3128,fork,reuseaddr TCP:10.88.0.1:3128
+
+
+
 socat TCP-LISTEN:3128,fork,reuseaddr TCP:10.88.0.1:3128
 
 
