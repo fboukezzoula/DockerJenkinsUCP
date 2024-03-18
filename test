@@ -1,3 +1,60 @@
+pour définir une variable dans le fichier vars/main.yaml en évaluant une commande shell, vous pouvez utiliser le module command pour exécuter la commande shell lors de la lecture des variables. Voici comment vous pouvez le faire :
+
+Créez un fichier vars/main.yaml dans votre rôle Ansible.
+Utilisez le module command dans votre playbook pour exécuter la commande shell et stocker le résultat dans une variable.
+Utilisez cette variable dans votre fichier vars/main.yaml.
+Voici un exemple de structure de répertoire mise à jour :
+
+css
+Copy code
+roles/
+└── votre_role/
+    ├── tasks/
+    │   └── main.yaml
+    ├── vars/
+    │   └── main.yaml
+    └── ...
+Contenu du fichier vars/main.yaml :
+
+yaml
+Copy code
+---
+resultat_commande_variable: "{{ lookup('pipe', 'votre_commande_shell') }}"
+Ensuite, vous pouvez utiliser cette variable dans votre playbook comme ceci :
+
+yaml
+Copy code
+---
+- name: Exemple de playbook Ansible
+  hosts: votre_hôte
+  tasks:
+    - name: Définir la variable en évaluant une commande shell
+      command: "echo 'votre_commande_shell'"
+      register: resultat_commande
+
+    - name: Inclure la variable dans vars/main.yaml
+      lineinfile:
+        path: "vars/main.yaml"
+        line: "resultat_commande_variable: '{{ resultat_commande.stdout }}'"
+        create: yes
+
+    - name: Utiliser la variable dans une autre tâche
+      debug:
+        msg: "Le résultat de la commande est {{ resultat_commande_variable }}"
+
+Assurez-vous de remplacer votre_hôte par le nom de votre hôte ou le groupe d'hôtes ciblé, et votre_commande_shell par la commande shell que vous souhaitez exécuter. Cette méthode écrira le résultat de la commande dans le fichier vars/main.yaml, le rendant disponible pour l'utilisation dans d'autres tâches.
+
+
+
+
+
+
+
+
+
+
+
+
 ---
 volumes:
   semaphore-mysql:
