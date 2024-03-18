@@ -1,3 +1,28 @@
+---
+- name: Exemple de playbook Ansible
+  hosts: votre_hôte
+  tasks:
+    - name: Exécuter la commande shell et récupérer la sortie
+      command: "podman network inspect podman"
+      register: resultat_commande
+
+    - name: Extraire la gateway de la sortie JSON
+      set_fact:
+        gateway_variable: "{{ resultat_commande.stdout | from_json | json_query('[0].subnets[0].gateway') }}"
+
+    - name: Inclure la variable dans vars/main.yaml
+      lineinfile:
+        path: "vars/main.yaml"
+        line: "gateway_variable: '{{ gateway_variable }}'"
+        create: yes
+
+    - name: Utiliser la variable dans une autre tâche
+      debug:
+        msg: "La gateway est {{ gateway_variable }}"
+
+
+
+
 
 Créez le fichier vars/main.yaml comme indiqué précédemment.
 Intégrez la commande podman network inspect podman | jq -r '.[0].subnets[0].gateway' dans votre playbook pour récupérer la sortie et l'attribuer à une variable.
