@@ -1,3 +1,6 @@
+socat TCP-LISTEN:3128,fork,reuseaddr TCP:10.88.0.1:3128
+
+
 ---
 - name: Exemple de playbook Ansible
   hosts: votre_hôte
