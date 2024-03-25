@@ -6,6 +6,30 @@
     
     - name: Calculer la gateway
       set_fact:
+        last_octet: "{{ network_address.split('.')[3] | int }}"
+        gateway: "{{ network_address.split('.')[0] }}.{{ network_address.split('.')[1] }}.{{ network_address.split('.')[2] }}.{{ last_octet + 1 }}"
+      
+    - debug:
+        msg: "Gateway : {{ gateway }}"
+
+
+
+
+
+
+
+
+
+
+
+- hosts: localhost
+  tasks:
+    - name: Extraire l'adresse IP de réseau
+      set_fact:
+        network_address: "{{ podman_subnet.split('/')[0] }}"
+    
+    - name: Calculer la gateway
+      set_fact:
         gateway: "{{ network_address | ipaddr(1) }}"
       
     - debug:
