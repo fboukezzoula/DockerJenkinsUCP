@@ -1,3 +1,41 @@
+- hosts: localhost
+  tasks:
+    - name: Extraire l'adresse IP de réseau
+      set_fact:
+        network_address: "{{ podman_subnet.split('/')[0] }}"
+    
+    - name: Calculer la gateway
+      set_fact:
+        gateway: "{{ network_address | ipaddr(1) }}"
+      
+    - debug:
+        msg: "Gateway : {{ gateway }}"
+
+
+- hosts: localhost
+  tasks:
+    - name: Exécuter une commande shell si l'un des fichiers a été modifié
+      shell: "votre_commande_shell"
+      args:
+        chdir: "/votre/repertoire"
+      when: file1_stat.changed or file2_stat.changed
+
+    - name: Vérifier si le fichier 1 a été modifié
+      stat:
+        path: /chemin/vers/file1
+      register: file1_stat
+
+    - name: Vérifier si le fichier 2 a été modifié
+      stat:
+        path: /chemin/vers/file2
+      register: file2_stat
+
+
+
+
+
+
+
 Pour rendre les règles iptables persistantes sur Red Hat 9, vous pouvez utiliser iptables-save et iptables-restore avec un script d'initialisation. Voici comment procéder :
 
 Sauvegardez vos règles iptables actuelles dans un fichier :
