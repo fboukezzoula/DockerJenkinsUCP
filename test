@@ -12,6 +12,34 @@
     - name: Calculer la gateway
       set_fact:
         podman_gateway_address: "{{ podman_default_subnet.split('/')[0] }}"
+        proxy_subnet: "{{ podman_gateway_address }}/24"
+        proxy_subnet_obj: "{{ proxy_subnet | ipaddr('network') }}"
+        proxy_ip_list: "{{ [ip.ip for ip in proxy_subnet_obj.iter_hosts()] }}"
+        proxy_hostname: "{{ proxy_ip_list[1] }}"
+      
+    - debug:
+        msg: "Gateway : {{ proxy_hostname }}"
+
+
+
+
+
+
+
+- hosts: localhost
+  tasks:
+    - name: Extraire l'adresse IP de réseau
+      set_fact:
+        podman_default_subnet: "10.88.0.0/16"
+
+    - name: Installer le module netaddr
+      pip:
+        name: netaddr
+        state: present
+
+    - name: Calculer la gateway
+      set_fact:
+        podman_gateway_address: "{{ podman_default_subnet.split('/')[0] }}"
         proxy_subnet: "{{ podman_gateway_address | ipaddr('network') }}"
         proxy_hostname: "{{ proxy_subnet | ipaddr(1) }}"
       
