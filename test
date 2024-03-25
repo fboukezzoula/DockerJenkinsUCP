@@ -3,6 +3,28 @@
     - name: Extraire l'adresse IP de réseau
       set_fact:
         network_address: "{{ podman_subnet.split('/')[0] }}"
+
+    - name: Installer le module netaddr
+      pip:
+        name: netaddr
+        state: present
+
+    - name: Calculer la gateway
+      set_fact:
+        gateway: "{{ network_address | ipaddr('network') | ipaddr(1) }}"
+      
+    - debug:
+        msg: "Gateway : {{ gateway }}"
+
+
+
+
+
+- hosts: localhost
+  tasks:
+    - name: Extraire l'adresse IP de réseau
+      set_fact:
+        network_address: "{{ podman_subnet.split('/')[0] }}"
     
     - name: Calculer la gateway
       set_fact:
