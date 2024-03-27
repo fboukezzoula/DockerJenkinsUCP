@@ -1,3 +1,57 @@
+If you're using an RHEL 9 server, the steps I provided should still generally apply, but the package names and commands might be slightly different. Here are the updated commands for RHEL 9:
+
+Install iptables using DNF instead of apt-get:
+
+sudo dnf install iptables -y
+Use firewalld instead of iptables to manage firewall rules: You can use the firewalld service to manage your firewall rules, which is the default firewall management tool on RHEL 9. First, check if it's already enabled and started:
+
+sudo systemctl status firewalld
+If it's not running, enable and start the service:
+
+sudo systemctl enable firewalld
+sudo systemctl start firewalld
+Configure the NAT rule using firewalld: Add a new forwarding rule to your RHEL 9 server's firewall that redirects incoming traffic on port 3128 to the target VM. Replace <target_vm_ip> with the IP address of the target VM and <source_port> with an available local port number.
+
+sudo firewall-cmd --permanent --zone=public --add-forward-port=3128/tcp --to-port=<source_port>
+sudo firewall-cmd --reload
+Mark the Podman container traffic: Add a mark to the container's network traffic so that it can be identified by the NAT rule, similar to the previous steps. However, you might need to use iptables instead of firewalld for this step on RHEL 9, as the firewalld interface might not support marking traffic directly.
+
+First, you need to enable IP forwarding and set up a bridge network for Podman:
+
+sudo sysctl net.ipv4.ip_forward=1
+sudo tee /etc/sysconfig/network-scripts/ifcfg-br0 <<EOF
+NAME=br0
+DEVICE=eth0
+TYPE=Bridge
+BOOTPROTO=none
+IPADDR=<server_ip>/24
+NETMASK=255.255.255.0
+ONBOOT=yes
+BRIDGE_PORTS=<interface_for_container>
+EOF
+
+Restart the network service to apply the changes:
+sudo systemctl restart network.service
+
+Now you can use `iptables` to mark the container traffic, similar to the previous steps:
+sudo iptables -t mangle -A PREROUTING --protocol tcp --dport <container_port> --mark-match mark --0 --jump MARK --mark 0x49
+sudo iptables -t nat -A OUTPUT --protocol tcp --dport <source_port> --mark 0x49 --jump MASQUERADE
+sudo iptables -t nat -A PREROUTING --protocol tcp --dport 3128 --jump MARK --mark 0x49
+Note that you may need to replace <server_ip> and <interface_for_container> with the appropriate values for your network setup.
+
+After configuring these rules, you should be able to connect to the process running on IP address 10.88.0.1:3128 from your local machine by connecting to your local machine's IP address and port number instead.
+
+
+
+
+
+
+
+
+
+
+
+
 If all VMs are listening on the same IP address and port (10.88.0.1:3128), and you cannot directly connect to this address due to the network configuration, you'll need to explore alternative solutions. Since SSH connections between the VMs are not an option and you're restricted from making network configuration changes within the VMs, you might need to consider different approaches.
 
 One potential solution could involve setting up a reverse SSH tunnel from each VM to a central server where you have administrative access. This would effectively allow you to forward traffic from a local port on each VM to 10.88.0.1:3128. Here's a general outline of how you could achieve this:
