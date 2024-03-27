@@ -636,3 +636,20 @@ spec:
             port:
               number: 80
 
+Apologies for the confusion earlier. Since you can't reach 10.88.0.1 directly from the source VM, instead of using the IP address as a destination in the NAT rule, you can try using the name or Fully Qualified Domain Name (FQDN) of the destination VM. If the source VM can resolve the name to the correct IP address, you should be able to set up the NAT rule as described below:
+
+First, ensure that both the source and destination VMs have proper DNS configuration. If necessary, add an entry in your DNS server or /etc/hosts file on each VM for the destination VM's name and IP address:
+
+Add an entry in your DNS server if you have access to it, or add an entry in /etc/hosts on the source VM:
+sudo vi /etc/hosts
+Add a line like this at the end of the file:
+10.88.0.x destination_vm_name
+Replace x with the correct IP address of the destination VM and destination_vm_name with the name you will use in the NAT rule.
+Next, follow the same steps as before to add a NAT rule to your source VM's firewall using the destination VM's name instead of its IP address:
+
+sudo iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 3128 -j DNAT --to-destination destination_vm_name:3128
+Now, the source VM will forward all traffic on port 3128 to the destination VM with the specified name. Make sure you have root privileges when running these commands.
+
+Keep in mind that this solution may not be secure for production environments and is generally recommended for testing and development purposes only. Additionally, you might want to adjust the firewall rules on both the source and destination VMs to allow necessary traffic.
+
+
