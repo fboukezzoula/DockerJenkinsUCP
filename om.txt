@@ -2103,3 +2103,173 @@ Exécutez ce script chaque fois que vous mettez à jour votre ConfigMap, et il g
 
 
 
+
+
+
+When you're trying to configure routing within a Docker container, the container does not have direct access to the physical network interfaces or the routing table of the host system. However, you can still create a virtual overlay network using Docker's built-in networking features. In your case, it seems you have already set up a tap0 interface for the container to connect to the network using the --cap-add=NET_ADMIN option.
+
+Instead of trying to set up a static route directly on the container, you can create a new Docker network and connect both containers (source and destination) to it. This way, they will be able to communicate with each other without the need for complex routing configurations.
+
+Here's how you can set it up:
+
+Create a new Docker network named my_network:
+docker network create my_network
+Start the destination container and connect it to the my_network:
+docker run --name destination_container --cap-add=NET_ADMIN --net my_network -d image:destination_image
+Replace destination_image with the appropriate Docker image name or ID.
+
+Inside your current container, you can add a static route by using the IP address of the destination container instead of the VM:
+ip route add 10.88.0.0/24 via 192.175.138.172 dev tap0
+Make sure that the container's network interface name (in this case tap0) is used instead of eth0 or any other interface you might have.
+
+The error "Error: Nexthop has invalid gateway" indicates that the specified next hop (gateway) address, 192.175.138.172, is not in a valid format or not reachable from the container's perspective.
+
+To troubleshoot this issue, try the following steps:
+
+Check if your container can ping the destination VM using its IP address 192.175.138.172:
+
+ping 192.175.138.172
+If the ping is successful, continue to step 2. Otherwise, check your network connectivity and firewall rules within your container and host machine.
+
+Verify that you have the correct network interface name (tap0 or other) in the container by running:
+
+ip a s
+Make sure that you have the correct destination IP address and subnet mask. In your example, it seems like 10.88.0.0/24 is a subnet, so you may need to replace the destination IP with the gateway of that subnet instead. To find the correct gateway for the given subnet, try running ip route show 10.88.0.0 on the destination VM and look for a default gateway or next-hop address.
+
+Assuming you have obtained the correct gateway IP, you should add it to your container's ip route table instead of the destination VM's IP address:
+
+# First, find the correct gateway IP for the 10.88.0.0/24 subnet. Replace 'gateway\_ip' with the actual gateway IP.
+ip route show | grep -A 1 10.88.0.0/24 | tail -n 1 | awk '{print $3}' > gateway\_ip.txt
+
+Then, run this command inside the container:
+
+```bash
+sudo ip route add 10.88.0.0/24 via $(cat gateway\_ip.txt) dev tap0
+Make sure that the container network interface name (in this case, tap0) and the destination VM IP address are correct. Also, ensure that the container has sufficient privileges to add routes.
+
+However, using the NET_ADMIN capability in Docker containers should be used with caution and is generally not recommended for production environments due to potential security risks. Instead, consider using other methods like setting up a VPN or SSH tunnels between the containers or hosts as previously suggested in this conversation.
+
+If you need to access services within your network from inside a container, it's recommended to expose the desired ports using Docker and configure your firewall rules accordingly. This approach is more secure and easier to manage than manipulating network routing directly within a container with NET_ADMIN capabilities.
+
+Here's an example of exposing a port in your Dockerfile:
+
+FROM some_base_image
+EXPOSE 3128
+CMD [ "/bin/sh", "-c", "your_command" ]
+Then, when you run the container:
+
+docker run -it --cap-add=NET_ADMIN your_image_name
+You've reached the destination VM (192.175.138.172) from within your container, and you want to add a static route with this IP as the next hop. However, when trying to do so with the ip route add command, you're encountering an "Error: Nexthop has invalid gateway" message.
+
+The reason for this error is that when you add the --cap-add=NET_ADMIN flag to your Docker container, it grants the container additional privileges, but it doesn't automatically extend the network stack inside the container with information about external networks or gateways.
+
+To set up a route from your Docker container to an external network, you'll need to create a network bridge that connects the container to the host system. Here's how you can do it:
+
+Create a new network interface on the host system and bring it up:
+sudo ip tuntap add name tap0 mode tun -u 65534
+sudo ifconfig tap0 up
+Assign an IP address to the new interface:
+sudo ifconfig tap0 10.88.0.1 netmask 255.255.255.0 up
+Add a route to the container network (replace 172.17.0.0/16 with the actual CIDR of your container network):
+sudo ip route add 172.17.0.0/16 via 192.175.138.172 dev tap0
+To be able to add a static route inside the Docker container, you need to share the network namespace with the container using the --net=host or --network=container:<container_name> option when starting the container. By doing this, you'll have access to the host's network stack, and you can add static routes as usual.
+First, stop your container:
+
+docker stop <container_name>
+Replace <container_name> with the name of your container.
+
+Next, start the container with the network namespace option to share the host's networking stack:
+
+docker run --rm -it --net=host <image_name> bash
+Replace <image_name> with the name of your Docker image. This command starts a new container using the host's networking stack.
+
+Now that you have a root shell inside the container with access to the network stack, you can add a static route as follows:
+
+Install iproute2 in the container if it's not already installed:
+
+apk add iproute2 -y
+(This command assumes you're using Alpine Linux as your container base image, and you have the apk package manager installed.)
+
+Add a static route to the container:
+
+ip route add 10.88.0.0/24 via 192.175.138.172 dev tap0
+You're getting the error "Error: Nexthop has invalid gateway" because the container doesn't have direct access to the physical network interface or the network gateway (192.175.138.172) from within its own network namespace created by Docker.
+
+Instead, you can use the iptables or ip masquerade-nat method to forward the traffic from within your container:
+
+Create a new bridge network in Docker:
+docker network create my_bridge
+Start your container using the my_bridge network:
+docker run --network my_bridge -it --rm image_name bash
+Inside the container, you can add a static route using the destination VM's IP address and your container's network interface name (in this case tap0):
+ip route add 192.175.138.172 dev tap0
+ip route add default via 192.175.138.172 dev tap0
+ip route add 10.88.0.0/24 via 192.175.138.172 dev tap0
+The error "Error: Nexthop has invalid gateway" occurs when the specified gateway address is not reachable from your container. In this case, since you can ping 192.175.138.172, it suggests that the container has connectivity to the destination VM. However, adding a static route in this scenario might still not work due to networking restrictions within the container.
+
+Instead, consider using an iptables rule for NAT (Network Address Translation) to redirect traffic from the container to the destination VM.
+
+First, ensure that the container has access to 192.175.138.172 and can ping it successfully.
+
+Next, add a NAT rule to the container using iptables:
+
+iptables -t nat -A PREROUTING -p tcp --dport 3128 -j DNAT --to-destination 192.175.138.172:3128
+Now, all incoming traffic to port 3128 on the container will be redirected to the destination IP address 192.175.138.172. However, as you've mentioned, adding a static route with the gateway address 192.175.138.172 results in an error.
+
+Given that you're inside a container with the NET_ADMIN capability, it is recommended to use Docker's network routing features instead of manipulating the host's IP routing table.
+
+First, check if you have a network interface named tap0 inside your container by running:
+
+ip a s dev tap0
+If you don't have a network interface named tap0, create one using wepnatd or another method that fits your Docker environment.
+
+Now, you can add a route inside the container to reach the destination network (10.88.0.0/24) via the destination VM's IP address (192.175.138.172):
+
+ip route add 10.88.0.0/24 via 192.175.138.172 dev tap0
+However, the error "Error: Nexthop has invalid gateway" indicates that there might be an issue with the specified via address (gateway) not being a valid one. In your case, it seems you are trying to set up a route within a Docker container using an IP address (192.175.138.172) that is not part of the container's network, but rather an external IP address of a VM on your host machine.
+
+To set up routing within a Docker container, you need to create a network bridge or use the --network option when starting the container. Here's an example of how you can set this up:
+
+Create a Docker network:
+docker network create my_network
+Start the container with the --network option to connect it to the newly created network:
+docker run --cap-add=NET_ADMIN --network my_network <image>:<tag> /bin/bash
+Inside the container, you should be able to add a static route using the IP address of the destination VM and its network prefix:
+ip route add 192.175.138.172/32 via <container_gateway_ip> dev tap0
+ip route add 192.175.138.0/24 via 192.175.138.172 dev tap0
+Replace <container_gateway_ip> with the IP address of your container's network gateway. The first command sets up a static route to reach the destination subnet (192.175.138.0/24) via the destination IP address, and the second command sets up a static route for the subnet 10.88.0.0/24 to be reached via the destination IP address as well.
+
+However, you've encountered an error because ip route add command doesn't support adding a static route to a next-hop gateway that is in another network, especially when you're running the command inside a container with the --cap-add=NET_ADMIN option.
+
+To achieve your goal, there are a few alternatives:
+
+Port forwarding using Docker: Instead of routing the traffic directly, you can use port forwarding within your Docker container to connect to the destination VM. First, you need to find out the container's external IP address by running:
+docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' container_name
+Replace container_name with the name or ID of your Docker container.
+
+Next, add a port forwarding rule to your Docker container when starting it:
+
+docker run --cap-add=NET_ADMIN --name container_name -p 2024:3128 <image>:<tag> --net=host --ipc=host <command>
+Replace <image>:<tag> with the Docker image and tag you want to use, <command> with any command you'd like to run inside the container, and 2024 with your desired local port number.
+
+Since you are in a Docker container with the NET_ADMIN capability and the --net=host --ipc=host options, you don't need to set up static routes within the container. Instead, try accessing the destination VM directly from inside the container using its IP address 192.175.138.172 and the desired port.
+
+If you still need to forward traffic from your host machine to the container, you can use iptables or ip masquerade-nat (also known as ip forwarding) rules. Here's a brief overview of how you can set it up:
+
+Add a port mapping when starting the Docker container:
+docker run --cap-add=NET_ADMIN -p <host_port>:<container_port> --name <container_name> <image>
+Replace <host_port> with the port number you want to use on the host machine, <container_port> with the port number that your process is listening on inside the container (10.88.0.1:3128, in this case), <container_name> with a descriptive name for your container, and <image> with the Docker image name.
+Since you are inside a container running as root with the --cap-add=NET_ADMIN option, the issue might be related to the lack of routing capabilities for the container.
+
+Instead of trying to add a static route directly inside the container, you can configure port forwarding when starting the container using docker run with the -P or -p option. This will automatically set up the necessary NAT rules for the container and enable traffic between the host and the container.
+
+Here's an example of how to use port forwarding with docker run:
+
+Run your Docker container using the -p or -P option to map a port on the host to a port inside the container:
+docker run --cap-add=NET_ADMIN --name my_container image_name -p 2024:3128
+Replace image_name with the name or ID of the Docker image you want to use. The -p 2024:3128 option maps port 2024 on the host to port 3128 inside the container.
+Since you're running your container with the --cap-add=NET_ADMIN option, you don't actually need to add a static route in this case. Instead, you can configure the container's network settings directly using the `docker network
+
+
+
+
