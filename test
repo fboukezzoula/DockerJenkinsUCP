@@ -652,4 +652,21 @@ Now, the source VM will forward all traffic on port 3128 to the destination VM w
 
 Keep in mind that this solution may not be secure for production environments and is generally recommended for testing and development purposes only. Additionally, you might want to adjust the firewall rules on both the source and destination VMs to allow necessary traffic.
 
+ou can also use socat to create a bidirectional tunnel between the source and destination VMs, bypassing the need for NAT rules. Here's how you can set it up:
 
+Install socat on both the source and destination VMs if it's not already installed:
+
+sudo apt-get install socat -y
+Set up the tunnel from the source VM to the destination VM:
+
+socat TCP-CONNECT:destination_vm_name:3128 EXEC:"nc -l 127.0.0.1 2024"
+Replace destination_vm_name with the name or FQDN of the destination VM, and replace 2024 with a free port number on the source VM.
+
+Start the tunnel with root privileges:
+
+sudo socat TCP-CONNECT:destination_vm_name:3128 EXEC:"nc -l 127.0.0.1 2024" &
+Now, all traffic sent to 127.0.0.1:2024 on the source VM will be forwarded to the destination VM listening on port 3128, and vice versa.
+
+Keep in mind that this solution may not be secure for production environments and is generally recommended for testing and development purposes only, as it exposes the source VM to potential security risks.
+
+Also, ensure that both VMs' firewalls allow necessary traffic between each other, and consider using secure methods for establishing the tunnel, such as SSH keys and encrypted connections.
