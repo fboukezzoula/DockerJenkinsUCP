@@ -1,3 +1,25 @@
+In your situation, it appears that you cannot directly reach the process running on IP address 10.88.0.1:3128 using regular networking methods due to it being a gateway in a Podman network. Since you cannot add static routes or modify the network configuration as a non-root user, one possible solution might be to create an iptables rule to NAT traffic from your local machine to the target VM.
+
+Here's a general outline of how you could set this up:
+
+Install iptables on your local machine: If it's not already installed, install the iptables package using your distribution's package manager. For example, on Ubuntu/Debian:
+
+sudo apt-get install iptables
+Configure the NAT rule: Add a new NAT rule to your local machine's firewall that redirects incoming traffic on port 3128 to the target VM. Replace <target_vm_ip> with the IP address of the target VM and <source_port> with an available local port number.
+
+sudo iptables -t nat -A PREROUTING --protocol tcp --dport 3128 -j REDIRECT --to-port <source_port>
+sudo iptables -t nat -A OUTPUT --protocol tcp --dport 3128 --match DOCKER --target MASQUERADE
+sudo iptables -t nat -A OUTPUT --protocol tcp --dport <source_port> -m mark --mark 0x47 --jump MASQUERADE
+Mark the Podman container traffic: Add a mark to the container's network traffic so that it can be identified by the NAT rule. Replace <container_name> with the name of your Podman container and <destination_port> with port 3128.
+
+sudo iptables -t mangle -A PREROUTING --protocol tcp --dport <container_port> --match mark --mark 0x47 -j MARK --mark 0x48
+Now, when you try to connect to port 3128 on your local machine, the traffic will be redirected to the target VM at IP address 10.88.0.1:3128 instead.
+
+Keep in mind that this setup may require additional configuration to allow traffic from the target VM to reach your local machine, depending on your specific use case and network environment.
+
+Also, be aware that using iptables can have security implications, as it allows you to modify the firewall rules of your machine. Ensure that you fully understand the potential risks and consequences before implementing this solution.
+
+
 Pour se connecter à Azure Key Vault avec un Service Principal (SPN) lors du provisionnement d'une machine virtuelle (VM) dans Azure à l'aide de Terraform, vous pouvez utiliser la ressource azurerm_virtual_machine_extension pour exécuter un script personnalisé (cloud-init) sur la VM. Voici un exemple de code Terraform qui montre comment accomplir cela :
 
 provider "azurerm" {
