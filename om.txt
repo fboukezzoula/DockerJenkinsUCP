@@ -1,3 +1,32 @@
+If all VMs are listening on the same IP address and port (10.88.0.1:3128), and you cannot directly connect to this address due to the network configuration, you'll need to explore alternative solutions. Since SSH connections between the VMs are not an option and you're restricted from making network configuration changes within the VMs, you might need to consider different approaches.
+
+One potential solution could involve setting up a reverse SSH tunnel from each VM to a central server where you have administrative access. This would effectively allow you to forward traffic from a local port on each VM to 10.88.0.1:3128. Here's a general outline of how you could achieve this:
+
+Set up Reverse SSH Tunnels:
+On each VM, establish a reverse SSH tunnel to a central server. This can be done by running the following command on each VM:
+
+graphql
+Copy code
+ssh -NR 2024:10.88.0.1:3128 central_server_username@central_server_ip
+Replace central_server_username with your username on the central server and central_server_ip with the IP address of the central server.
+
+Access the Service:
+Now, you can access the service running on 10.88.0.1:3128 from each VM by connecting to localhost:2024.
+
+This approach effectively tunnels traffic from each VM through SSH to the central server, which then forwards it to the desired service. It doesn't require root access within the VMs and avoids the need for direct network configuration changes.
+
+Ensure that SSH access is allowed between the VMs and the central server, and that you have the necessary permissions to establish SSH connections. Additionally, make sure that SSH is configured to allow reverse tunneling on the central server.
+
+Keep in mind that this solution may require ongoing maintenance and monitoring to ensure the stability and security of the SSH tunnels.
+
+
+
+
+
+
+
+
+
 If you're using an RHEL 9 server, the steps I provided should still generally apply, but the package names and commands might be slightly different. Here are the updated commands for RHEL 9:
 
 Install iptables using DNF instead of apt-get:
