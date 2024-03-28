@@ -1,3 +1,24 @@
+Install iptables (if not already installed):
+bash
+Copy code
+sudo dnf install iptables
+Configure the NAT rule:
+bash
+Copy code
+sudo iptables -t nat -A PREROUTING --protocol tcp --dport 80 -j DNAT --to-destination 10.88.0.1:3128
+sudo iptables -t nat -A POSTROUTING --protocol tcp --dport 3128 -d 10.88.0.1 -j SNAT --to-source 192.175.138.172
+Mark the Podman container traffic:
+bash
+Copy code
+sudo iptables -t mangle -A PREROUTING --protocol tcp --dport 3128 -s <container_ip> -j MARK --set-mark 0x47
+Make sure to replace <container_ip> with the actual IP address of your Podman container.
+
+These rules will forward traffic from port 80 on your local machine to 10.88.0.1:3128, and then masquerade the source address to 192.175.138.172. Additionally, the third rule marks the traffic from your container to be identified by the NAT rule.
+
+
+
+
+
 If you're using an RHEL 9 server, the steps I provided should still generally apply, but the package names and commands might be slightly different. Here are the updated commands for RHEL 9:
 
 Install iptables using DNF instead of apt-get:
